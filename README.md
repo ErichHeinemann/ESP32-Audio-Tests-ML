@@ -1,5 +1,5 @@
 # ESP32-Audio-Tests-ML
-This Repository is a collection of modified Repositories originally created by Marcel License and modified by me
+This Repository is a collection of modified Repositories originally created by Marcel Licence and modified by me
 
 The original Repositories are there:
 https://github.com/marcel-licence
