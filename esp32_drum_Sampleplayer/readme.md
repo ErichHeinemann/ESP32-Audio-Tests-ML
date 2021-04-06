@@ -1,6 +1,6 @@
 FIRST!!!!
 
-Check this encredible Synths and Drum-Computer from Marcel License:
+Check this encredible Synths and Drum-Computer from Marcel Licence:
 https://github.com/marcel-licence
 
 If You already played around with some other libraries, - the sound is really as good as in the videos.
