@@ -8,7 +8,7 @@ I have tested the synth and the drum-computer, but as I have no MIDI-Controller-
 
 Therefore
 
-This Sampleplayer based on the Drum_Computer created by Marcel License has some differences:
+This Sampleplayer based on the Drum_Computer created by Marcel Licence has some differences:
 - I dropped the Sequencer to lower the complexity
 - I replaced the custom MIDI-Handlers by the well documented Arduino MIDI Library (Forty Seven Effects)
 - it is not optimized for a specific MIDI-Keyboard - I have removed this part of code to lower the complexity
