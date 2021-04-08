@@ -10,6 +10,7 @@
   *  - removed the Sequencer to simplify the Arduino-Sketch
   *  - replaced custom MIDI-Code by the standard Arduino MIDI-Library from FourtysevenEffects
   *  - changeed some lines of the sampler and midi_interface to be able to switch between 2 directories with samples via program-change
+  *  - Added Controls (Midi CC and Analog Inputs) to integrate the ESP32 into a Korg Volca Beats
   */
 
 #include <Arduino.h>
