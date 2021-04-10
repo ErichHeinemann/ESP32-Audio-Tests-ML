@@ -11,7 +11,7 @@ I first connected the Audio-Out of the PCM5102 to the Volume-Pot of the Korg Vol
 The best step would be to go further to use an extra box for the new Sound-Source and only connect the MIDI-Out (TX/GND) from the Volca to this new box.
 
 A short Video:
-https://www.youtube.com/watch?v=dH1kI-yeoMQ
+https://www.youtube.com/watch?v=XIrn2-dZn1U
 
 Also check the Code from the main developer: 
 
