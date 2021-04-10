@@ -11,3 +11,8 @@ Today, April 2021, there are a lot of options to create a small Synthesizer or D
 I tried to strip down his projects to make them a bit more unspecific and that way, it could be a bit more easy for others to start with his code.
 
 Schematics and other documents will be provided later.
+
+Video of the Volca Beats PCM MOD
+https://www.youtube.com/watch?v=XIrn2-dZn1U
+
+it is not really a mod, it is more a ADD. :)
