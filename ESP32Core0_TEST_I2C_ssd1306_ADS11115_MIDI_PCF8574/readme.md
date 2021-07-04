@@ -10,3 +10,6 @@ Final statement:
 This code is not for a final product, its purpose is only for testing the capabilities with I2C on Core 0 on ESP32.
 
 Does it manage Midi or create any Sounds: No, not in the current state.
+
+LAB-Board Wiree&Wrap from underneth
+<img src="https://github.com/ErichHeinemann/ESP32-Audio-Tests-ML/raw/main/ESP32Core0_TEST_I2C_ssd1306_ADS11115_MIDI_PCF8574/IMG_5635.JPG">
