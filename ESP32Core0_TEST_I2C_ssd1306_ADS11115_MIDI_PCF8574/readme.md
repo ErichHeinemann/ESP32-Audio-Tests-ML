@@ -11,7 +11,7 @@ This code is not for a final product, its purpose is only for testing the capabi
 
 Does it manage Midi or create any Sounds: No, not in the current state.
 
-Lab-Board on 3d-printed holder base
+Lab-Board on 3d-printed holder base, the PCF8574 DIL are under the OLED
 <img src="https://github.com/ErichHeinemann/ESP32-Audio-Tests-ML/raw/main/ESP32Core0_TEST_I2C_ssd1306_ADS11115_MIDI_PCF8574/IMG_5634.JPG">
 
 LAB-Board Wiree&Wrap from underneth
