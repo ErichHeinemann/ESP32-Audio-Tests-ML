@@ -11,8 +11,13 @@ This code is not for a final product, its purpose is only for testing the capabi
 
 Does it manage Midi or create any Sounds: No, not in the current state.
 
+
+
 Lab-Board on 3d-printed holder base, the PCF8574 DIL are under the OLED
-<img src="https://github.com/ErichHeinemann/ESP32-Audio-Tests-ML/raw/main/ESP32Core0_TEST_I2C_ssd1306_ADS11115_MIDI_PCF8574/IMG_5634.JPG">
+Testing the UI with the OLED - 16 Steps as bubbles
+<img src="/ErichHeinemann/ESP32-Audio-Tests-ML/raw/main/ESP32Core0_TEST_I2C_ssd1306_ADS11115_MIDI_PCF8574/IMG_5640.JPG
+Testing 4 Valuees with 4 Pots (ADS1115)
+<img src="/ErichHeinemann/ESP32-Audio-Tests-ML/raw/main/ESP32Core0_TEST_I2C_ssd1306_ADS11115_MIDI_PCF8574/IMG_5634.JPG">
 
 LAB-Board Wiree&Wrap from underneth
-<img src="https://github.com/ErichHeinemann/ESP32-Audio-Tests-ML/raw/main/ESP32Core0_TEST_I2C_ssd1306_ADS11115_MIDI_PCF8574/IMG_5635.JPG">
+<img src="/ErichHeinemann/ESP32-Audio-Tests-ML/raw/main/ESP32Core0_TEST_I2C_ssd1306_ADS11115_MIDI_PCF8574/IMG_5635.JPG">
