@@ -8,7 +8,7 @@
 
 // History
 // 2021-06-04 E.Heinemann
-// 2021-07-05 E.Heinemann replaced somee static test-Strings with real content
+// 2021-07-05 E.Heinemann replaced some static test-Strings with real content
 
 
 void update_display_bars(  ){
