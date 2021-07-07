@@ -23,6 +23,11 @@ One LED on Pin 2
 
 **************************************************************************/
 
+#include <Arduino.h>
+#include "FS.h"
+#include <LITTLEFS.h>
+
+#include <WiFi.h>
 #include <SPI.h>
 #include <Wire.h>
 #include <Adafruit_GFX.h>
@@ -68,6 +73,8 @@ Adafruit_SSD1306 display( SCREEN_WIDTH, SCREEN_HEIGHT, &I2Ctwo, OLED_RESET );
 
 #define ADC_ADDRESS 0x48
 
+#define SAMPLE_RATE  44100
+
 // PCF8574 
 // adjust addresses if needed
 // AUTHOR of PCF8574-Lib: Rob Tillaart
@@ -81,7 +88,11 @@ byte pcf_value1, pcf_value2, pcf_value3;
 // old values
 byte pcf_value1_1, pcf_value2_1, pcf_value3_1;
 // Read-Values of Buttonstate..
-byte tmp_pcf_value1_1, tmp_pcf_value2_1, tmp_pcf_value3_1;
+byte tmp_pcf_value1_1, tmp_pcf_value2_1, tmp_pcf_value3_1, tmp_pcf_value3_1_but;
+
+float bpm=131.5;
+
+boolean func_but_pressed = false;
 
 // Test for Display
 String active_track_name="Kick";
@@ -93,6 +104,13 @@ uint16_t active_step = 0; // 96 Steps per full note, // 24 per Quaternote // 12 
 // this is used to add a task to core 0
 TaskHandle_t  Core0TaskHnd ;
 
+
+// These values are only used to make an integration with MIDI, additional analog inputs or with an Menü slightly simplier
+// The values could be 0 - 127 or floats ... 
+uint8_t global_playbackspeed; // The Playbackspeed
+uint8_t global_bitcrush;      // is bitcrusher active
+uint8_t global_biCutoff;      // Cutoff-Frequency of the filter
+uint8_t global_biReso;        // Resonance of the filter
 
 void setup(){
   // LED-Pin to check frequently activities only needed for testing
@@ -109,8 +127,34 @@ void setup(){
   MIDISerial.begin( 31250, SERIAL_8N1, MIDIRX_PIN, MIDITX_PIN ); // midi port
   MIDI_setup();
 
+  setup_i2s();
+
+#if 0
+    setup_wifi();
+#else
+    WiFi.mode(WIFI_OFF);
+#endif
+  btStop();
+  // Sampler_Init();
+  // Effect_Init();
   xTaskCreatePinnedToCore( Core0Task, "Core0Task", 8000, NULL, 5, &Core0TaskHnd, 0);
 }
+
+/*
+inline void audio_task(){
+    // prepare out samples for processing
+    float fl_sample = 0.0f;
+    float fr_sample = 0.0f;
+
+    Sampler_Process( &fl_sample, &fr_sample );
+    Effect_Process( &fl_sample, &fr_sample );
+
+    //Don’t block the ISR if the buffer is full
+    if (!i2s_write_samples(fl_sample, fr_sample)){
+        // error!
+    }
+}
+*/
 
 
 
@@ -198,16 +242,16 @@ uint8_t compare2values( uint16_t val1, uint16_t val2 ){
 
 void Core0TaskLoop(){
   // put your loop stuff for core0 here
-
-  readPCF_rotary();
+  
+  readPCF_rotary_fast();
 
   ads_prescaler +=1;
-  if( ads_prescaler > 30 ){
-    readPCF();
+  if( ads_prescaler > 20 ){
+    readPCF();  // for the 16 Steps
+    readPCF3(); // for the Control-Buttons
     ads1115red( 0 , param_val0, param_val1, param_val2, param_val3 );
     ads_prescaler = 0;
   }
-  
 
   display_prescaler +=1;
   if(( do_display_update== true && display_prescaler > 4 ) || display_prescaler > 150  ){
