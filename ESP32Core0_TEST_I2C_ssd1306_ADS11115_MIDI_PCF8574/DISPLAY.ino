@@ -6,6 +6,11 @@
 // The number and name of the selected Instrument
 // E.Heinemann 2021-06-04
 
+// History
+// 2021-06-04 E.Heinemann
+// 2021-07-05 E.Heinemann replaced somee static test-Strings with real content
+
+
 void update_display_bars(  ){
   digitalWrite( LED_PIN, HIGH );
   display.clearDisplay();
@@ -95,7 +100,9 @@ void update_display_bars(  ){
 
   // Current Menu
   display.setCursor( 110, 56 ); 
-  display.println( "Inst");
+
+  display.println( act_menu );
+  // display.println( "Inst");
 
   // Status and Speed
   display.setCursor( 64, 56 ); 
@@ -107,8 +114,8 @@ void update_display_bars(  ){
   // Recording?
   display.fillCircle( 69, 59, 4, SSD1306_INVERSE);
   
-  display.setCursor( 80, 56 ); 
-  display.print( "131");
+  display.setCursor( 79, 56 ); 
+  display.print( bpm  );
   
   
   display.setCursor( 110, 56 ); 
