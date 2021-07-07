@@ -15,8 +15,8 @@ boolean enc_pin_pb_touched = false;
 
 // Keeps track of the last pins touched
 // so we know when buttons are 'released'
-uint8_t  lasttouched[] = { 0,0,0,0 ,0,0,0,0 };
-uint8_t  currtouched[] = {  0,0,0,0 ,0,0,0,0 };
+uint8_t  lasttouched3[] = { 0,0,0,0 ,0,0,0,0 };
+uint8_t  currtouched3[] = {  0,0,0,0 ,0,0,0,0 };
 
 // Pin-Number used on the PCF3! 
 uint8_t enc_pin_a  = 6; // center to ground
@@ -63,9 +63,17 @@ void readPCF(){
     for( int i=0; i <= 7; i++ ){
       if( (tmp_pcf_value1 & (1 << i))==0 ){
         if( ( pcf_value1 & (1 << i))==0 ){
-          bitSet( pcf_value1, i);
+          if( func_but_pressed == false ){
+            bitSet( pcf_value1, i );
+          }else{
+            func_but( i );
+          }
         }else{
-          bitClear( pcf_value1, i);
+          if( func_but_pressed == false ){
+            bitClear( pcf_value1, i );
+          }else{
+            func_but( i );
+          }
         }
       }
     }
@@ -76,9 +84,17 @@ void readPCF(){
     for( int i=0; i <= 7; i++ ){
       if( (tmp_pcf_value2 & (1 << i))==0 ){
         if( ( pcf_value2 & (1 << i))==0 ){
-          bitSet( pcf_value2, i);
+          if( func_but_pressed == false ){
+            bitSet( pcf_value2, i );
+          }else{
+            func_but( i +8);
+          }
         }else{
-          bitClear( pcf_value2, i);
+          if( func_but_pressed == false ){
+            bitClear( pcf_value2, i );
+          }else{
+            func_but( i +8 );
+          }
         }
       }
     }
@@ -109,80 +125,126 @@ void readPCF(){
   
 }
 
-void readPCF_rotary(){
-  
- byte tmp_pcf_value3 = PCF3.read8();
-  if(  tmp_pcf_value3_1 != tmp_pcf_value3 ){ 
+
+
+void readPCF3(){
+  byte tmp_pcf_value3_but = tmp_pcf_value3_1; // PCF3.read8();
+  if( tmp_pcf_value3_1_but != tmp_pcf_value3_but ){
     for( int i=0; i <= 7; i++ ){
-      /*
-      if( (tmp_pcf_value3 & (1 << i))==0 ){
-        if( ( pcf_value3 & (1 << i))==0 ){
-          bitSet( pcf_value3, i);
-        }else{
-          bitClear( pcf_value3, i);
-        }
-      }
-      */
-      lasttouched[i] = currtouched[i];
-
-      if( ( tmp_pcf_value3 & (1 << i))==0 ){
-        currtouched[i]=1;
-      }else{
-        currtouched[i]=0;
-      }
-
-      if( currtouched[i]==1 && lasttouched[i]==0 ){
-        // irgendeine taste wurde gedrueckt
-        if( i!=enc_pin_a && i!=enc_pin_b && i!=enc_pin_pb ){
-          Serial.print(i); Serial.println(" touched");
-        }  
-        // Encoderepin A wurde bewegt
-        if( i==enc_pin_a && enc_pin_a_touched==false ){
-          enc_pin_a_touched = true;
-          if( enc_pin_b_touched == true ){
-             // Serial.println("Encoder turned right");  
-             // Display und andere Abfragen verzögern, die Abfrage des Encoders hängt sonst
-             ads_prescaler = 0;   
-             display_prescaler = 0;
-          }         
-        }
-        // Encoderepin B wurde bewegt
-        if( i==enc_pin_b && enc_pin_b_touched==false ){
-          enc_pin_b_touched = true;
-          if(  enc_pin_a_touched == true ){
-             // Serial.println("Encoder turned  left");    
-             // Display und andere Abfragen verzögern, die Abfrage des Encoders hängt sonst
-             ads_prescaler = 0;   
-             display_prescaler = 0;
+      if( i!=enc_pin_a && i!=enc_pin_b ){
+        
+        lasttouched3[i] = currtouched3[i];
+        if( ( tmp_pcf_value3_but & (1 << i))==0 ){
+          currtouched3[i]=1;
+          if( lasttouched3[i]==0 ){
+            if( i == 0 ){
+              func_but_pressed = true;
+            }
+            Serial.print("Button pressed ");
+            Serial.println( i ); 
+            
+            // Mit dem Mechanismus wissen wir nicht, ob ein Button immer noch gedrückt ist. 
+            // Wird für Menü-Fastenkombis und FUNC-Buttons benötigt!!   
           }
+        }else{
+          currtouched3[i]=0;
+          if( lasttouched3[i]==1 ){
+            if( i == 0 ){
+              func_but_pressed = false;
+            }
+          } 
         }
-        // Encoderepin des Buttons wurde gedrueckt
-        if( i == enc_pin_pb && enc_pin_pb_touched == false ){
-          enc_pin_pb_touched = true;
-          Serial.println("Encoder-button pressed");          
-        }          
+
+
+        
       }
-      
-      // if it *was* touched and now *isnt*, alert!
-      if( currtouched[i]==0 && lasttouched[i]==1 ) {
-        if( i!=enc_pin_a && i!=enc_pin_b && i!=enc_pin_pb ){
-          Serial.print(i); Serial.println(" released");
-        }
-        if( i == enc_pin_a && enc_pin_a_touched == true ){
-          enc_pin_a_touched = false;       
-        } 
-        if( i == enc_pin_b && enc_pin_b_touched == true ){
-          enc_pin_b_touched = false;      
-        } 
-        if( i == enc_pin_pb && enc_pin_pb_touched == true ){
-          enc_pin_pb_touched = false;   
-          Serial.println("Encoder-button released");          
-          
-        } 
-      }
-      
-    }
+    }   
+    tmp_pcf_value3_1_but = tmp_pcf_value3_but;
   }
-  pcf_value3_1 = pcf_value3;
+}  
+
+
+
+
+// faster Encoder
+void readPCF_rotary_fast(){
+  
+  byte tmp_pcf_value3 = PCF3.read8();
+  
+  if(  tmp_pcf_value3_1 != tmp_pcf_value3 ){
+    
+    uint8_t i = enc_pin_a;
+    lasttouched3[i] = currtouched3[i];
+
+    if( ( tmp_pcf_value3 & (1 << i))==0 ){
+      currtouched3[i]=1;
+    }else{
+      currtouched3[i]=0;
+    }
+
+    if( currtouched3[i]==1 && lasttouched3[i]==0 ){
+      // Encoderepin A wurde bewegt
+      if( enc_pin_a_touched==false ){
+        enc_pin_a_touched = true;
+        if( enc_pin_b_touched == true ){
+           Serial.println("Enc turned right");  
+           // Display und andere Abfragen verzögern, die Abfrage des Encoders hängt sonst
+           ads_prescaler = 0;   
+           display_prescaler = 0;
+        }         
+      }
+    }      
+    // if it *was* touched and now *isnt*, alert!
+    if( currtouched3[i]==0 && lasttouched3[i]==1 ) {
+      if( enc_pin_a_touched == true ){
+        enc_pin_a_touched = false;       
+      } 
+    }
+    
+    // enc_pin_b
+    i = enc_pin_b;
+    lasttouched3[i] = currtouched3[i];
+  
+    if( ( tmp_pcf_value3 & (1 << i))==0 ){
+      currtouched3[i]=1;
+    }else{
+      currtouched3[i]=0;
+    }
+  
+    if( currtouched3[i]==1 && lasttouched3[i]==0 ){     
+      // Encoderepin B wurde bewegt
+      if( enc_pin_b_touched==false ){
+        enc_pin_b_touched = true;
+        if(  enc_pin_a_touched == true ){
+           Serial.println("Enc turned left");    
+           // Display und andere Abfragen verzögern, die Abfrage des Encoders hängt sonst
+           ads_prescaler = 0;   
+           display_prescaler = 0;
+        }
+      }         
+    }
+    
+    // if it *was* touched and now *isnt*, alert!
+    if( currtouched3[i]==0 && lasttouched3[i]==1 ) {
+      if( enc_pin_b_touched == true ){
+        enc_pin_b_touched = false;      
+      } 
+    }
+
+    /*
+    // Status der anderen Buttons
+    i = enc_pin_pb;
+    lasttouched3[i] = currtouched3[i];
+    if( ( tmp_pcf_value3 & (1 << i))==0 ){
+      currtouched3[i]=1;
+    }else{
+      currtouched3[i]=0;
+    }    
+    if( currtouched3[i]==1 && lasttouched3[i]==0 ){     
+        Serial.println("Enc Button pressed");    
+    }
+    */
+  }
+
   tmp_pcf_value3_1 = tmp_pcf_value3;
 }  
