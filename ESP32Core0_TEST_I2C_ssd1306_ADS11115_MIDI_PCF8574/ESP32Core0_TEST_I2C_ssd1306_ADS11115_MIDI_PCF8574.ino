@@ -35,6 +35,7 @@ One LED on Pin 2
 
 // MIDI-Library FoutysevenEffects
 #include <MIDI.h>
+#define NORM127MUL  0.007874f
 
 #define MIDIRX_PIN 16
 #define MIDITX_PIN 17
@@ -91,13 +92,19 @@ byte pcf_value1_1, pcf_value2_1, pcf_value3_1;
 byte tmp_pcf_value1_1, tmp_pcf_value2_1, tmp_pcf_value3_1, tmp_pcf_value3_1_but;
 
 float bpm=131.5;
+float old_bpm=131.5;
+uint16_t count_ppqn = 0;
+uint8_t veloAccent = 120;
+uint8_t midi_channel = 10;
+uint8_t count_bars = 16;
+
 
 boolean func_but_pressed = false;
 
 // Test for Display
 String active_track_name="Kick";
 uint8_t active_track_num = 1;
-uint16_t active_step = 0; // 96 Steps per full note, // 24 per Quaternote // 12 bei Achtelnoten, 6 bei 16tell ... Stepsequencer arbeitet mti 16tel.
+uint16_t active_step = 0; // 96 Steps per full note, // 24 per Quaternote // 12 bei Achtelnoten, 6 bei 16tell ... Stepsequencer arbeitet mit 16tel Noten, daher 6 Clock-Signale von einem Step zum nächsten.
 
 
 #define LED_PIN 2
@@ -193,7 +200,9 @@ const String instrument[]      ={ "Accent", "PAD 1", "PAD 2" , "PAD 3" , "PAD 4"
 uint8_t iSound[] ={ -1,  36, 37, 38, 39, 40, 41, 42, 43,  44, 45, 46, 47, 48, 49, 50, 51 }; // MIDI-Sound, edited via Menu 50=TOM, 44=closed HH, 
 uint8_t iVelo[]  ={ 127, 90, 90, 90, 90, 90, 90, 90, 90,  90, 90, 90, 90, 90, 90, 90, 90 }; // Velocity, edited via Menu
 uint8_t inotes1[]={ 255,255,255,255,255,255,255,255,255, 255,255,255,255,255,255,255, 255 };
+uint8_t inotes2[]={ 255,255,255,255,255,255,255,255,255, 255,255,255,255,255,255,255, 255 };
 
+uint8_t count_instr = 17;
 
 // We get some values for parameters from a Patchmanager
 // param_valX is the current value
