@@ -1,4 +1,4 @@
-This is a Test-Project in Development
+<h1> DIY Volca - <b>POlca</b></h1>
 
 Video 1: - bad Video-Quality (geman)
 https://www.youtube.com/watch?v=xNPJgFerRqw
@@ -30,7 +30,7 @@ and add the WAV-Files with following specs:
 - 44.1 kHz Samplingrate
 - Filename must be something like: 100_LCO.WAV where "LCO" will be displayed in the OLED-display, the Numbers should be in a order.
 In the moment the ESP32 boots, it loads the samples into its sampleslots in the order of the samplenames.
-In may case I have this structure of files:
+In my case I have this structure of files:
 /data/0/100_LCO.wav
 /data/0/101_MCO.wav
 /data/0/100_HCO.wav
