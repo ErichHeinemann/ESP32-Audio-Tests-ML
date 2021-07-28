@@ -8,7 +8,7 @@
  * 2021-04-05 E.Heinemann changed BLOCKSIZE from 2024 to 1024
  *             , added DEBUG_SAMPLER
  *             , added sampleRate to the structure of samplePlayerS to optimize the pitch based on lower samplerates
- * 
+ * 2021-07-28 E.Heinemann, added pitch-decay and pan
  */
 
 #include <Arduino.h>
@@ -82,9 +82,6 @@ uint8_t progNumber = 0; // first subdirectory in /data
 uint8_t countPrograms = 5;
 
 float global_pitch_decay = 0.0f; // good from -0.2 to +1.0
-uint8_t global_pitch_decay_midi = 64;
-uint8_t global_pitch_decay_midi_old = 64; // 64 = global_pitch_decay = 0.0f !
-
 
 uint32_t sampleInfoCount = 0; /*!< storing the count if found samples in file system */
 float slowRelease; /*!< slow releasing signal will be used when sample playback stopped */
@@ -320,10 +317,12 @@ inline void Sampler_NoteOn( uint8_t note, uint8_t vol ){
       global_pitch_decay_midi_old = global_pitch_decay_midi;
       if( global_pitch_decay_midi < 63 ){ 
         global_pitch_decay = (float) (65-global_pitch_decay_midi)/300; // good from -0.2 to +1.0
-      }  
-      if( global_pitch_decay_midi > 65 ){ 
+      }else if( global_pitch_decay_midi > 65 ){ 
         global_pitch_decay = (float) global_pitch_decay_midi/65; // good from -0.2 to +1.0
-      }  
+      }else{
+        global_pitch_decay = 0.0f;  
+      }
+      
 
     }
 
@@ -469,7 +468,7 @@ inline void Sampler_Process(float *left, float *right){
 
             samplePlayer[i].samplePos += 2; /* we have consumed two bytes */
 
-            samplePlayer[i].samplePosF += 2.0f * sampler_playback * ( samplePlayer[i].pitch + global_pitch_decay_midi *samplePlayer[i].vel ); /* we have consumed two bytes */
+            samplePlayer[i].samplePosF += 2.0f * sampler_playback * ( samplePlayer[i].pitch + global_pitch_decay * (1-samplePlayer[i].vel) ); /* we have consumed two bytes */
             // samplePlayer[i].samplePosF += 2.0f * sampler_playback * ( samplePlayer[i].pitch + samplePlayer[i].pitch_decay*samplePlayer[i].vel ); /* we have consumed two bytes */
             // samplePlayer[i].samplePosF += 2.0f * sampler_playback * samplePlayer[i].pitch ; /* we have consumed two bytes */
 
