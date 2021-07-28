@@ -15,13 +15,13 @@ void ads1115red( int show_serial , uint8_t & param_val0 , uint8_t & param_val1 ,
   adc3_1 = adc3;
 
   // fetch new values with a slightly lowpass and better precision
-  adc0 = ( adc0*2 + ads.readADC_SingleEnded(0)  ) / 3;
+  adc0 = ( adc0*1 + ads.readADC_SingleEnded(0)  ) / 2;
   // delay(1);
-  adc1 = ( adc1*2 + ads.readADC_SingleEnded(1)  ) / 3;
+  adc1 = ( adc1*1 + ads.readADC_SingleEnded(1)  ) / 2;
   // delay(1);
-  adc2 = ( adc2*2 + ads.readADC_SingleEnded(2)  ) / 3;
+  adc2 = ( adc2*1 + ads.readADC_SingleEnded(2)  ) / 2;
   // delay(1);
-  adc3 = ( adc3*2 + ads.readADC_SingleEnded(3)  ) / 3;
+  adc3 = ( adc3*1 + ads.readADC_SingleEnded(3)  ) / 2;
 
 /* Better:
   // fetch new values with a slightly lowpass and better precision
@@ -33,17 +33,33 @@ void ads1115red( int show_serial , uint8_t & param_val0 , uint8_t & param_val1 ,
   // delay(1);
   adc3 = ( adc3*2 + ads.readADC_SingleEnded(3) + ads.readADC_SingleEnded(3) ) / 4;
 */
-  if( do_display_update == false && ( adc0 > adc0_1 +adc_slope || adc0<adc0_1 -adc_slope   ) ){
+
+/*
+  if( do_display_update == false )&& ( adc0 > adc0_1 +adc_slope || adc0<adc0_1 -adc_slope   ) ){
     do_display_update = true;    
+    param_val0 = map( adc0, 0, 17600, 0, 127 );
   }
   if( do_display_update == false && ( adc1 > adc1_1 +adc_slope || adc1<adc1_1 - adc_slope  ) ){
     do_display_update = true;    
+    param_val1 = map( adc1, 0, 17600, 0, 127 );
   }
+  
   if( do_display_update == false && ( adc2 > adc2_1 +adc_slope || adc2<adc2_1 -adc_slope   ) ){
     do_display_update = true;    
+    param_val2 = map( adc2, 0, 17600, 0, 127 );
+
+    if( act_menuNum == 0 && act_instr > 0 ){
+      // Change Pitch
+      pitch_midi[ act_instr-1 ] = param_val2;
+      Serial.print("New Pitch");
+      Serial.println( param_val2 );
+      // Sampler_SetSoundPitch_Midi( param_val2 );
+    }
+    
   }
   if( do_display_update == false && ( adc3 > adc3_1 +adc_slope || adc3<adc3_1 -adc_slope   ) ){
     do_display_update = true;    
+    param_val3 = map( adc3, 0, 17600, 0, 127 );
   }
 
   if( do_display_update == true ){
@@ -51,6 +67,80 @@ void ads1115red( int show_serial , uint8_t & param_val0 , uint8_t & param_val1 ,
     param_val1 = map( adc1, 0, 17600, 0, 127 );
     param_val2 = map( adc2, 0, 17600, 0, 127 );
     param_val3 = map( adc3, 0, 17600, 0, 127 );
+  }
+ */
+
+  if(  adc0 > adc0_1 +adc_slope || adc0<adc0_1 -adc_slope ){
+    do_display_update = true;    
+    param_val0 = map( adc0, 0, 17600, 0, 127 );
+
+    if( act_menuNum == 0 && act_instr > 0 && val0_synced == 1 ){
+      // Change Pitch
+      volume_midi[ act_instr-1 ] = param_val0;
+      Serial.print("New Volume");
+      Serial.println( param_val0 );
+    } 
+
+    if( act_menuNum == 4 && val0_synced == 1 ){
+      // Change Main-BPM
+      bpm_pot_midi = param_val0;
+      bpm = (float) 30.0f + bpm_pot_midi*2 + ( bpm_pot_fine_midi-65 )/20.0f;
+      myTimer_Delta = sequencer_calc_delay( bpm );
+      Serial.print("New Speed Main");
+      Serial.println( param_val0 );
+    } 
+
+  }
+
+  
+  if( adc1 > adc1_1 +adc_slope || adc1<adc1_1 - adc_slope ){
+    do_display_update = true;    
+    param_val1 = map( adc1, 0, 17600, 0, 127 );
+
+    if( act_menuNum == 0 && act_instr > 0 && val1_synced == 1 ){
+      // Change Decay
+      decay_midi[ act_instr-1 ] = param_val1;
+      Serial.print("New Decay");
+      Serial.println( param_val1 );
+    }
+
+    if( act_menuNum == 4 && val1_synced == 1){
+      // Change Main-BPM
+      bpm_pot_fine_midi = param_val1;
+      bpm = (float) 30.0f + bpm_pot_midi*2 + ( bpm_pot_fine_midi-65 )/20.0f;
+      myTimer_Delta = sequencer_calc_delay( bpm );
+      Serial.print("New Speed Fine");
+      Serial.println( param_val1 );
+    } 
+
+    
+  }
+  
+  if( adc2 > adc2_1 +adc_slope || adc2<adc2_1 -adc_slope ){
+    do_display_update = true;    
+    param_val2 = map( adc2, 0, 17600, 0, 127 );
+
+    if( act_menuNum == 0 && act_instr > 0 && val2_synced == 1){
+      // Change Pitch
+      pitch_midi[ act_instr-1 ] = param_val2;
+      Serial.print("New Pitch");
+      Serial.println( param_val2 );
+      // Sampler_SetSoundPitch_Midi( param_val2 );
+    }
+    
+  }
+  if( adc3 > adc3_1 +adc_slope || adc3<adc3_1 -adc_slope ){
+    do_display_update = true;    
+    param_val3 = map( adc3, 0, 17600, 0, 127 );
+
+    if( act_menuNum == 0 && act_instr > 0 && val3_synced == 1){
+      // Change Pitch
+      pan_midi[ act_instr-1 ] = param_val3;
+      Serial.print("New Pan");
+      Serial.println( param_val3 );
+      // Sampler_SetSoundPitch_Midi( param_val2 );
+    }
+    
   }
 
   if( show_serial > 0 ){
