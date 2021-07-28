@@ -54,6 +54,8 @@ Testing the UI with the OLED - 16 Steps as bubbles
 Testing 4 Valuees with 4 Pots (ADS1115)
 <img src="https://github.com/ErichHeinemann/ESP32-Audio-Tests-ML/raw/main/ESP32Core0_TEST_I2C_ssd1306_ADS11115_MIDI_PCF8574/IMG_5634.JPG">
 
+<img src="https://github.com/ErichHeinemann/ESP32-Audio-Tests-ML/raw/main/ESP32Core0_TEST_I2C_ssd1306_ADS11115_MIDI_PCF8574/ESP32%20Step%20Sequencer%20Schematic.png">
+
 3D-printed box
 <img src="https://github.com/ErichHeinemann/ESP32-Audio-Tests-ML/raw/main/ESP32Core0_TEST_I2C_ssd1306_ADS11115_MIDI_PCF8574/IMG_5668.JPG">
 
