@@ -1,5 +1,14 @@
 This is a Test-Project in Development
 
+Video 1: - bad Video-Quality (geman)
+https://www.youtube.com/watch?v=xNPJgFerRqw
+
+Video 2: Bad Audio ( very low volume )
+https://www.youtube.com/watch?v=J7IOvEoxopA
+
+What will Video 3 provide?
+
+
 I would like to create a UI for an electronic Instrument based on ESP32 only using I2C for a Display (SSD1306) 16 Step-Buttons, 16 Leds, some Control-Buttons and 4 Potentiometers and finally a Rotary Encoder. The Rotary-Encoder - a standard from the nineties ist more like  a nightmare on I2C. I use only Core0 for the I2C! That way, Core 1 - the default for Arduino is free for Your application! Core 0 supports I2C only with 50KHz - which is less then expected. To get all these GPIO or GPI - Ports, I am using 3x PCF8574 I2C multiplexers which could toggle between Input-muxer and Output-muxer to drive the LEDs. The Rotary-Encoder is connecteed to the last 3 Pins of the third PCF7574.  The code is optimized to request the status of the third PCF8574 as often as possible to get any turn of the encoder. In the current code it is still not optimal.
 I will add some screenshots to get an overview how it looks alike in reality.
 I named my project, a 16 Stepsequencer with an Sample-Engine "Polca" a combination of the "PO"-Series and the "Volca" - Series.
