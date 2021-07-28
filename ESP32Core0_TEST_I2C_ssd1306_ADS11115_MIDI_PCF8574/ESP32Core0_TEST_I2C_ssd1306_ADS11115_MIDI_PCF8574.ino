@@ -136,20 +136,23 @@ TaskHandle_t  Core0TaskHnd ;
 
 // These values are only used to make an integration with MIDI, additional analog inputs or with an Menü slightly simplier
 // The values could be 0 - 127 or floats ... 
-uint8_t global_playbackspeed; // The Playbackspeed
+uint8_t global_playbackspeed = 64; // The Playbackspeed
 uint8_t global_bitcrush;      // is bitcrusher active
-uint8_t global_biCutoff;      // Cutoff-Frequency of the filter
-uint8_t global_biReso;        // Resonance of the filter
+uint8_t global_biCutoff = 64;      // Cutoff-Frequency of the filter
+uint8_t global_biReso= 64;        // Resonance of the filter
 
-uint8_t global_playbackspeed_midi; // The Playbackspeed
-uint8_t global_bitcrush_midi;      // is bitcrusher active
-uint8_t global_biCutoff_midi;      // Cutoff-Frequency of the filter
-uint8_t global_biReso_midi;        // Resonance of the filter
+uint8_t global_playbackspeed_midi= 64; // The Playbackspeed
+uint8_t global_bitcrush_midi= 64;      // is bitcrusher active
+uint8_t global_biCutoff_midi= 64;      // Cutoff-Frequency of the filter
+uint8_t global_biReso_midi= 64;        // Resonance of the filter
 
-uint8_t global_playbackspeed_midi_old; // The Playbackspeed
-uint8_t global_bitcrush_midi_old;      // is bitcrusher active
-uint8_t global_biCutoff_midi_old;      // Cutoff-Frequency of the filter
-uint8_t global_biReso_midi_old;        // Resonance of the filter
+uint8_t global_playbackspeed_midi_old = global_playbackspeed_midi; // The Playbackspeed
+uint8_t global_bitcrush_midi_old = global_bitcrush_midi;      // is bitcrusher active
+uint8_t global_biCutoff_midi_old = global_biCutoff_midi;      // Cutoff-Frequency of the filter
+uint8_t global_biReso_midi_old = global_biReso_midi;        // Resonance of the filter
+
+uint8_t global_pitch_decay_midi = 64;
+uint8_t global_pitch_decay_midi_old = 64; // 64 = global_pitch_decay = 0.0f !
 
 uint8_t act_menuNum = 0;
 uint8_t act_page = 0;
@@ -207,17 +210,17 @@ uint8_t param_val0, param_val1, param_val2, param_val3;
 // patch_val0 is the value from the patchmanager
 // uint8_t patch_val0, patch_val1, patch_val2, patch_val3;
 // Some Values for the Patch .. only for testing
-uint8_t patch_val0 = 100;
-uint8_t patch_val1 = 50;
-uint8_t patch_val2 = 25;
-uint8_t patch_val3 = 10;
+uint8_t patch_val0 = 65;
+uint8_t patch_val1 = 65;
+uint8_t patch_val2 = 65;
+uint8_t patch_val3 = 65;
 
 
 // Some Names for the values - only for testing
-String param_name0="Volume  "; 
-String param_name1="Decay   "; 
-String param_name2="Pitch   "; 
-String param_name3="EG      "; 
+String param_name0="Volume"; 
+String param_name1="Decay"; 
+String param_name2="Pitch"; 
+String param_name3="Pan"; 
 
 int16_t adc0, adc1, adc2, adc3;
 int16_t adc0_1, adc1_1, adc2_1, adc3_1;
@@ -283,6 +286,8 @@ void setup(){
   btStop();
   Sampler_Init();
   Effect_Init();
+  Effect_SetBitCrusher(1.0);
+  
   xTaskCreatePinnedToCore( Core0Task, "Core0Task", 8000, NULL, 5, &Core0TaskHnd, 0);
 
   sequencer_new_instr( act_instr );
