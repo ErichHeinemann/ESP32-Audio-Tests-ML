@@ -17,12 +17,11 @@
 
 #define CONFIG_LITTLEFS_CACHE_SIZE 512
 
-
 /* use define to dump midi data */
-#define DEBUG_SAMPLER
+// #define DEBUG_SAMPLER
 
 // If Blocksize us set to 2048, the limit of SAMPLECNT is 12
-#define BLOCKSIZE  (1024*1) /* only multiples of 2, otherwise the rest will not work */
+#define BLOCKSIZE  (2048*1) /* only multiples of 2, otherwise the rest will not work */
 #define SAMPLECNT 12
 
 #define ARRAY_SIZE(a) (sizeof(a)/sizeof(a[0]))
@@ -34,7 +33,6 @@
 #define FORMAT_LITTLEFS_IF_FAILED true
 
 struct samplePlayerS{
-  
     char filename[32];
     File file;
     uint32_t sampleRate;
@@ -54,10 +52,23 @@ struct samplePlayerS{
     float decay;
     float vel;
     float pitch;
+    float release;
+    float pan;
+    float volume_float;
+    
+    uint8_t decay_midi;
+    uint8_t volume_midi;
+    uint8_t pitch_midi;
+    uint8_t attack_midi; // offset for samples
+    uint8_t pan_midi;
+    boolean is_muted;
+
+    float pitch_decay = 0.0f;
+   
+    
 };
 
 struct samplePlayerS samplePlayer[ SAMPLECNT ];
-
 
 /*
  * ###############################################################################################
@@ -69,6 +80,10 @@ struct samplePlayerS samplePlayer[ SAMPLECNT ];
 
 uint8_t progNumber = 0; // first subdirectory in /data 
 uint8_t countPrograms = 5;
+
+float global_pitch_decay = 0.0f; // good from -0.2 to +1.0
+uint8_t global_pitch_decay_midi = 64;
+uint8_t global_pitch_decay_midi_old = 64; // 64 = global_pitch_decay = 0.0f !
 
 
 uint32_t sampleInfoCount = 0; /*!< storing the count if found samples in file system */
@@ -103,8 +118,10 @@ void Sampler_ScanContents(fs::FS &fs, const char *dirname, uint8_t levels){
             Serial.println(file.size());
 
             if( sampleInfoCount < SAMPLECNT ){
-                strncpy(samplePlayer[ sampleInfoCount ].filename, file.name(), 32);
+                strncpy( samplePlayer[ sampleInfoCount ].filename, file.name(), 32);
                 sampleInfoCount ++;
+                String fname = file.name();                
+                shortInstr[ sampleInfoCount ] = fname.substring(7, 10);
             }
         }
         delay(1);
@@ -150,7 +167,7 @@ inline void Sampler_Init(){
     Serial.println("---\nListSamples:");
 
     for (int i = 0; i < sampleInfoCount; i++ ){
-        Serial.printf("s[%d]: %s\n", i, samplePlayer[i].filename);
+        Serial.printf( "s[%d]: %s\n", i, samplePlayer[i].filename );
 
         delay(10);
 
@@ -195,6 +212,15 @@ inline void Sampler_Init(){
         samplePlayer[i].sampleSeek = 0xFFFFFFFF;
         samplePlayer[i].active = false;
         samplePlayer[i].decay = 1.0f;
+        samplePlayer[i].release = 0.5f;
+        samplePlayer[i].decay_midi = 64;
+        samplePlayer[i].attack_midi = 0;
+        samplePlayer[i].volume_midi = 127;
+        samplePlayer[i].volume_float = 1.0f;
+        samplePlayer[i].pan_midi = 64;
+        samplePlayer[i].pan = 0.5;
+        
+        samplePlayer[i].pitch_midi = 64;
         if( samplePlayer[i].sampleRate > 0 ){
           samplePlayer[i].pitch = 1.0f / SAMPLE_RATE * samplePlayer[i].sampleRate;
         } 
@@ -204,48 +230,153 @@ inline void Sampler_Init(){
 
 uint8_t selectedNote = 0;
 
+
 inline void Sampler_SelectNote( uint8_t note ){
   selectedNote = note % sampleInfoCount;
 }
 
-inline void Sampler_SetDecay( uint8_t ch, uint8_t data1, uint8_t data2){
-  float value = NORM127MUL * (float)data2;
-  samplePlayer[ selectedNote ].decay = 1 - (0.000005 * pow( 5000, 1.0f - value) );
+
+inline void Sampler_SetPan_Midi( uint8_t data1){
+  samplePlayer[ selectedNote ].pan_midi = data1;
+  float value = NORM127MUL * (float)data1;
+  samplePlayer[ selectedNote ].pan =  value;
 #ifdef DEBUG_SAMPLER
-  Serial.printf("Sampler - Note[%d].decay: %0.2f\n",  selectedNote, samplePlayer[selectedNote].decay);
+  Serial.printf("Sampler - Note[%d].pan: %0.2f\n",  selectedNote, samplePlayer[ selectedNote ].pan );
 #endif  
 }
 
-uint16_t Sampler_GetSoundSamplerate(){
-  return samplePlayer[selectedNote].sampleRate;
+
+inline void Sampler_SetDecay_Midi( uint8_t data1){
+  samplePlayer[ selectedNote ].decay_midi = data1;
+  float value = NORM127MUL * (float)data1;
+  samplePlayer[ selectedNote ].decay = 1 - (0.000005 * pow( 5000, 1.0f - value) );
+#ifdef DEBUG_SAMPLER
+  Serial.printf("Sampler - Note[%d].decay: %0.2f\n",  selectedNote, samplePlayer[ selectedNote ].decay);
+#endif  
 }
-float Sampler_GetSoundPitch(){
-  return samplePlayer[selectedNote].pitch;
+
+inline void Sampler_SetVolume_Midi( uint8_t data1){
+  samplePlayer[ selectedNote ].volume_midi = data1;
+}
+
+uint16_t Sampler_GetSoundSamplerate(){
+  return samplePlayer[ selectedNote ].sampleRate;
+}
+
+uint8_t Sampler_GetSoundDecay_Midi(){
+  return samplePlayer[ selectedNote ].decay_midi;
+}
+
+uint16_t Sampler_GetSoundPan_Midi(){
+  return samplePlayer[ selectedNote ].pan_midi;
+}
+
+uint8_t Sampler_GetSoundPitch_Midi(){
+  return samplePlayer[selectedNote].pitch_midi;
+}
+
+uint8_t Sampler_GetSoundVolume_Midi(){
+  return samplePlayer[selectedNote].volume_midi;
+}
+
+void Sampler_SetSoundPitch_Midi( uint8_t value){
+  Serial.println("Pitch");
+  samplePlayer[ selectedNote ].pitch_midi = value;
+  Sampler_SetSoundPitch( NORM127MUL * value );
 }
 
 void Sampler_SetSoundPitch(float value){
-  samplePlayer[selectedNote].pitch = pow( 2.0f, 4.0f * ( value - 0.5f ) );
+  samplePlayer[ selectedNote ].pitch = pow( 2.0f, 4.0f * ( value - 0.5f ) );
 #ifdef DEBUG_SAMPLER  
-  Serial.printf("Sampler - Note[%d] pitch: %0.3f\n",  selectedNote, samplePlayer[selectedNote].pitch );
+  Serial.printf("Sampler - Note[%d] pitch: %0.3f\n",  selectedNote, samplePlayer[ selectedNote ].pitch );
 #endif 
 }
 
+// Offset for the Sample-Playback to cut the sample from the left
+void Sampler_SetAttack_Midi( uint8_t value ){
+  samplePlayer[selectedNote].attack_midi = value;
+}
+
+
 inline void Sampler_NoteOn( uint8_t note, uint8_t vol ){
-
-
+  
     /* check for null to avoid division by zero */
     if( sampleInfoCount == 0 ){
         return;
     }
     int j = note % sampleInfoCount;
+
+    if( is_muted[ j+1 ]== true){
+      return;
+    }
+
+
 #ifdef DEBUG_SAMPLER
-    Serial.printf("note %d on volume %d\n", note, vol);
+    Serial.printf("note %d on volume %d\n", note, vol );
     Serial.printf("Filename: %s \n", samplePlayer[ j ].filename );    
 #endif
+
+    if( global_pitch_decay_midi != global_pitch_decay_midi_old ){
+      global_pitch_decay_midi_old = global_pitch_decay_midi;
+      if( global_pitch_decay_midi < 63 ){ 
+        global_pitch_decay = (float) (65-global_pitch_decay_midi)/300; // good from -0.2 to +1.0
+      }  
+      if( global_pitch_decay_midi > 65 ){ 
+        global_pitch_decay = (float) global_pitch_decay_midi/65; // good from -0.2 to +1.0
+      }  
+
+    }
+
+    if( volume_midi[ j ] != samplePlayer[ j ].volume_midi ){
+#ifdef DEBUG_SAMPLER
+      Serial.print("Volume");
+      Serial.println( j );      
+      Serial.print(" samplePlayer");
+      Serial.println( volume_midi[ j ] );
+#endif   
+      samplePlayer[ j ].volume_midi = volume_midi[ j ];
+      float value = NORM127MUL * volume_midi[ j ];
+      samplePlayer[ j ].volume_float = value;
+    }
+
+    if( decay_midi[ j ] != samplePlayer[ j ].decay_midi ){
+#ifdef DEBUG_SAMPLER
+      Serial.print("Decay");
+      Serial.println( j );      
+      Serial.print(" samplePlayer");
+      Serial.println( decay_midi[ j ] );
+#endif   
+      samplePlayer[ j ].decay_midi = decay_midi[ j ];
+      float value = NORM127MUL * decay_midi[ j ];
+      samplePlayer[ j ].decay = 1 - (0.000005 * pow( 5000, 1.0f - value) );
+    }
+
+    if( pitch_midi[ j ] != samplePlayer[ j ].pitch_midi ){
+#ifdef DEBUG_SAMPLER
+      Serial.print("Pitch");
+      Serial.println( j );      
+      Serial.print(" samplePlayer");
+      Serial.println( pitch_midi[ j ] );
+#endif   
+      samplePlayer[ j ].pitch_midi = pitch_midi[ j ];
+      float value = NORM127MUL * pitch_midi[ j ];
+      samplePlayer[ j ].pitch = pow( 2.0f, 4.0f * ( value - 0.5f ) );
+    }
+
+    if( pan_midi[ j ] != samplePlayer[ j ].pan_midi ){
+#ifdef DEBUG_SAMPLER
+      Serial.print("Pan");
+      Serial.println( j );      
+      Serial.print(" samplePlayer");
+      Serial.println( pan_midi[ j ] );
+#endif   
+      samplePlayer[ j ].pan_midi = pan_midi[ j ];
+      float value = NORM127MUL * pan_midi[ j ];
+      samplePlayer[ j ].pan = value;
+    }
+
     struct samplePlayerS *newSamplePlayer = &samplePlayer[j];
-
-
-
+    
     if( newSamplePlayer->active ){
         /* add last output signal to slow release to avoid noise */
         slowRelease = newSamplePlayer->signal;
@@ -255,20 +386,18 @@ inline void Sampler_NoteOn( uint8_t note, uint8_t vol ){
     newSamplePlayer->samplePos  = 0;
     newSamplePlayer->lastDataOut = BLOCKSIZE; /* trigger loading second half */
     
-    newSamplePlayer->volume = vol * NORM127MUL;
+    newSamplePlayer->volume = vol * NORM127MUL * newSamplePlayer->volume_float;
     newSamplePlayer->vel    = 1.0f;
     newSamplePlayer->dataIn = 0;
-    newSamplePlayer->sampleSeek = 44;
-
+    newSamplePlayer->sampleSeek = 44 + newSamplePlayer->attack_midi;
  
-
     memcpy( newSamplePlayer->data, newSamplePlayer->preloadData, BLOCKSIZE );
     newSamplePlayer->active = true;
-    newSamplePlayer->file.seek(BLOCKSIZE + 44, SeekSet); /* seek ack to beginning -> after pre load data */
+    newSamplePlayer->file.seek( BLOCKSIZE + 44, SeekSet ); /* seek ack to beginning -> after pre load data */
     // Das waere auch der Einstiegspunkt, wenn man Loopen wollte.
 }
 
-inline void Sampler_NoteOff(uint8_t note){
+inline void Sampler_NoteOff( uint8_t note ){
     /*
      * nothing to do yet
      * we could stop samples if we want to
@@ -282,6 +411,9 @@ inline void Sampler_NoteOff(uint8_t note){
 
 float sampler_playback = 1.0f;
 
+void Sampler_SetPlaybackSpeed_Midi( float value ){
+  Sampler_SetSoundPitch( NORM127MUL * value );
+}
 void Sampler_SetPlaybackSpeed( float value ){
     value = pow(2.0f, 4.0f * (value - 0.5));
     Serial.printf("Sampler_SetPlaybackSpeed: %0.2f\n", value);
@@ -295,11 +427,14 @@ void Sampler_SetProgram( uint8_t prog ){
 inline void Sampler_Process(float *left, float *right){
     float signal = 0.0f;
     signal += slowRelease;
+    float signal_r = 0.0f;
+    signal_r += slowRelease;
+    
     slowRelease = slowRelease * 0.99; /* go slowly to zero */
 
     for( int i = 0; i < SAMPLECNT; i++ ){
 
-        if( samplePlayer[i].active ){
+        if( samplePlayer[i].active  ){
             samplePlayer[i].samplePos = samplePlayer[i].samplePosF;
             samplePlayer[i].samplePos -= samplePlayer[i].samplePos % 2;
             uint32_t dataOut = samplePlayer[i].samplePos & ((BLOCKSIZE * 2) - 1); /* going through all data and repeat */
@@ -324,16 +459,19 @@ inline void Sampler_Process(float *left, float *right){
 
             sampleU.u16 = (((uint16_t)samplePlayer[i].data[dataOut + 1]) << 8U) + (uint16_t)samplePlayer[i].data[dataOut + 0];
             samplePlayer[i].signal = samplePlayer[i].volume * ((float)sampleU.s16) * (1.0f / ((float)(0x9000)) );
-            signal += samplePlayer[i].signal * samplePlayer[i].vel;
+            signal += samplePlayer[i].signal * samplePlayer[i].vel * (1- samplePlayer[i].pan );
+            signal_r += samplePlayer[i].signal * samplePlayer[i].vel *  samplePlayer[i].pan;
 
             // Filter per SamplePlayer?
             // ToBeDone 
 
-            
             samplePlayer[i].vel *= samplePlayer[i].decay;
 
             samplePlayer[i].samplePos += 2; /* we have consumed two bytes */
-            samplePlayer[i].samplePosF += 2.0f * sampler_playback * samplePlayer[i].pitch; /* we have consumed two bytes */
+
+            samplePlayer[i].samplePosF += 2.0f * sampler_playback * ( samplePlayer[i].pitch + global_pitch_decay_midi *samplePlayer[i].vel ); /* we have consumed two bytes */
+            // samplePlayer[i].samplePosF += 2.0f * sampler_playback * ( samplePlayer[i].pitch + samplePlayer[i].pitch_decay*samplePlayer[i].vel ); /* we have consumed two bytes */
+            // samplePlayer[i].samplePosF += 2.0f * sampler_playback * samplePlayer[i].pitch ; /* we have consumed two bytes */
 
             if( samplePlayer[i].samplePos >= samplePlayer[i].sampleSize ){
                 samplePlayer[i].active = false;
@@ -341,9 +479,7 @@ inline void Sampler_Process(float *left, float *right){
         }
     }
 
-    
-
     // PAN?
     *left  = signal;
-    *right = signal;
+    *right = signal_r;
 }
