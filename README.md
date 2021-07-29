@@ -4,7 +4,7 @@ This Repository is a collection of modified Repositories originally created by M
 The original Repositories are there:
 https://github.com/marcel-licence
 
-<h2> July 2021 - DIY Volca Percussion <b> POlca </b>
+<h2> July 2021 - DIY Volca Percussion <b> POlca </b></h2>
 This project, which is a new extended version of the PCM-Mod is a standalone Volca-Thing, in my case it has the same size as my Volca Beats.
 I am still in the stage of developing it, but a lot works already and makes a lot of fun.
 https://github.com/ErichHeinemann/ESP32-Audio-Tests-ML/tree/main/ESP32Core0_TEST_I2C_ssd1306_ADS11115_MIDI_PCF8574
