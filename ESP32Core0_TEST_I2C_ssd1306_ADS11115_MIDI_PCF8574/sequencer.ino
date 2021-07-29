@@ -26,11 +26,15 @@ void sequencer_new_instr( uint8_t new_instr_num  ){
   // store the values of the last instrument
   inotes1[ act_instr ] = step_pattern_1;
   inotes2[ act_instr ] = step_pattern_2;
+  
   //Serial.print("old_step_pattern_1: " );
   //Serial.println( step_pattern_1 );
   
   // get the stored values of the new instrument  
   act_instr = new_instr_num;
+  active_track_num = act_instr;
+  active_track_name = shortInstr[ act_instr ];
+    
   step_pattern_1 = inotes1[ act_instr ];
   step_pattern_2 = inotes2[ act_instr ];
 
@@ -38,17 +42,18 @@ void sequencer_new_instr( uint8_t new_instr_num  ){
   //Serial.println( step_pattern_1 );
 
   // Poti-Values synchronisieren
+  // Volume
+  param_val0 = volume_midi[act_instr-1]; // Sampler_GetSoundVolume_Midi();  
   // Decay
-  param_val1 = Sampler_GetSoundDecay_Midi();
+  param_val1 = decay_midi[act_instr-1];
   // Pitch 
-  param_val2 = Sampler_GetSoundPitch_Midi();
+  param_val2 = pitch_midi[act_instr-1];
   // Panorama
-  param_val3 = Sampler_GetSoundPan_Midi();
+  param_val3 = pan_midi[act_instr-1];// Sampler_GetSoundPan_Midi();
   
   pcf_value1 = step_pattern_1;
   pcf_value2 = step_pattern_2;
-  active_track_num = act_instr;
-  active_track_name = shortInstr[ act_instr ];
+
 #ifdef DEBUG_SEQUENCER 
   Serial.print("new Instrument: " );
   Serial.print( active_track_num );
@@ -185,7 +190,6 @@ void sequence_process(){
         // Accent is set
         veloAccent = iVelo[0];
       } 
-      
 
       // loop through all instruments .. But ignore Accent with 0       
       for( int i = 1; i < count_instr; i++ ){
@@ -194,8 +198,8 @@ void sequence_process(){
           if( velocity > 127 ) {
             velocity = 127; 
           }
-          MIDI.sendNoteOff( iSound[i],         0, midi_channel ); // MIDI-Off could be removed if You trigger external analog gear. For Samplers you should keep it     
-          MIDI.sendNoteOn(  iSound[i], velocity ,midi_channel );  // iSound is the array with the MIDI-Note-Number for the Pads
+          MIDI.sendNoteOff( midinote_in_out[i],         0, midichannel_in_out[i]-1 ); // MIDI-Off could be removed if You trigger external analog gear. For Samplers you should keep it     
+          MIDI.sendNoteOn(  midinote_in_out[i], velocity , midichannel_in_out[i]-1 );  // iSound is the array with the MIDI-Note-Number for the Pads
           Sampler_NoteOn( i-1, velocity ); // Accent "0" has no Sample to play
 #ifdef DEBUG_SEQUENCER 
           Serial.println("NoteOn");
@@ -219,8 +223,8 @@ void sequence_process(){
           if( velocity > 127 ){
             velocity = 127;
           }
-          MIDI.sendNoteOff( iSound[i],         0, midi_channel ); // MIDI-Off could be removed if You trigger external analog gear. For Samplers you should keep it       
-          MIDI.sendNoteOn(  iSound[i], velocity , midi_channel ); // iSound is the array with the MIDI-Note-Number for the Pads
+          MIDI.sendNoteOff( midinote_in_out[i],         0, midichannel_in_out[i]-1 ); // MIDI-Off could be removed if You trigger external analog gear. For Samplers you should keep it       
+          MIDI.sendNoteOn(  midinote_in_out[i], velocity , midichannel_in_out[i]-1 ); // iSound is the array with the MIDI-Note-Number for the Pads
           Sampler_NoteOn( i-1, velocity ); // Accent "0" has no Sample to play
 #ifdef DEBUG_SEQUENCER 
           Serial.println("NoteOn");
