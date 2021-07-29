@@ -21,6 +21,11 @@ That way, I left a lot of GPIOs unused. If You use a normal ESP32 You could add 
 Final statement:
 This code is not for a final product, its purpose is only for testing the capabilities with I2C on Core 0 on ESP32.
 
+Userguide:
+While playing with an Akai MPC 2k5 I have learned that the Pads could be used as a Menu and I mostly don´t use the Rotary Encoder of it.
+I tried to make the UI mostly usable without Rotary Encoders. I use 2 Function-Buttons, F1 to select the Tracks or Instruments, F2 as the Global Function to get access to other menus. Potentially, I could create 16 Menus which could be accessed using F2 and one of the 16 Step-Buttons.
+The userguide is in the folder "/docs/".
+
 How are the WAV-Files stored?
 I used LittleFS which is a AddOn for ESP32. create a folder "data" inside the project-folder
 Create a new folder "0" inside /data for the first 12 WAV-Files for the first Set
