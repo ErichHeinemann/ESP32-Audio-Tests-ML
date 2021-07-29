@@ -198,7 +198,7 @@ void readPCF3(){
           if( lasttouched3[i]==0 ){
             if( i == 0 ){
               func1_but_pressed = true;
-              if( act_menuNum != 0 ){ 
+              if( act_menuNum > 1 ){ 
                 changeMenu( 0 );
               }
             }
