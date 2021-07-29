@@ -124,7 +124,7 @@ boolean  func3_but_pressed = false; //
 
 
 // Test for Display
-String   active_track_name="Kick";
+String   active_track_name="DUMMY";
 uint8_t  active_track_num = 1;
 uint16_t active_step = 0; // 96 Steps per full note, // 24 per Quaternote // 12 bei Achtelnoten, 6 bei 16tell ... Stepsequencer arbeitet mit 16tel Noten, daher 6 Clock-Signale von einem Step zum nächsten.
 
@@ -137,12 +137,12 @@ TaskHandle_t  Core0TaskHnd ;
 // These values are only used to make an integration with MIDI, additional analog inputs or with an Menü slightly simplier
 // The values could be 0 - 127 or floats ... 
 uint8_t global_playbackspeed = 64; // The Playbackspeed
-uint8_t global_bitcrush;      // is bitcrusher active
+uint8_t global_bitcrush = 0;      // is bitcrusher active
 uint8_t global_biCutoff = 64;      // Cutoff-Frequency of the filter
 uint8_t global_biReso= 64;        // Resonance of the filter
 
 uint8_t global_playbackspeed_midi= 64; // The Playbackspeed
-uint8_t global_bitcrush_midi= 64;      // is bitcrusher active
+uint8_t global_bitcrush_midi= 0;      // is bitcrusher active
 uint8_t global_biCutoff_midi= 64;      // Cutoff-Frequency of the filter
 uint8_t global_biReso_midi= 64;        // Resonance of the filter
 
@@ -170,10 +170,10 @@ uint8_t act_menuNum_max = 8;
 
 // Instr
 String pages[] = { "Volume", "Decay", "Pitch","Pan"
-  , "MidiNote", "-", "-","-"
-  , "Filter", "Reso", "BitCrush","PitDec"
+  , "NoteNum", "Channel", "Attack","EG"
+  , "Filter", "Reso", "BitCrush","SampSpeed"
   , "Accent", "Normal", "-","-"
-  , "Main", "Fine", "-","Pitch"
+  , "Main", "Fine", "-","-"
   , "Bars", "-", "-","-"
   , "Scheme", "-", "-","-"
   , "Scale", "-", "-","-"
@@ -188,18 +188,29 @@ boolean  playBeats = false;
 // const 
 String shortInstr[] ={ "ACC"   , "LCO", "SN" , "HHcl" , "HHop", "Cr", "Cl", "LT", "HT", "S1", "S2", "S3", "S4"
                        ,"T1","T2","T3","T4" };
-const String instrument[]      ={ "Accent", "S1", "S2" , "S3" , "S4", "S5", "S6", "S7", "S8", "PAD 9", "PAD 10", "PAD 11", "PAD 12","PAD 13","PAD 14","PAD 15","PAD 16" };
-uint8_t iSound[] ={ -1,  36, 37, 38, 39, 40, 41, 42, 43,  44, 45, 46, 47, 48, 49, 50, 51 }; // MIDI-Sound, edited via Menu 50=TOM, 44=closed HH, 
+const String instrument[]      ={ "Accent", "S1", "S2" , "S3" , "S4", "S5", "S6", "S7", "S8", "S9", "S10", "S11", "S12","S13","S14","S15","S16" };
+int8_t  midinote_in_out[] ={ -1,  36, 37, 38, 39, 40, 41, 42, 43,  44, 45, 46, 47, 48, 49, 50, 51 }; // MIDI-Sound, edited via Menu 50=TOM, 44=closed HH, 
+uint8_t midichannel_in_out[] ={ -1,  10,10,10,10, 10,10,10,10, 10,10,10,10, 10,10,10,10 }; // MIDI-Channel je Sound, edited via Menu 50=TOM, 44=closed HH, 
+
 uint8_t iVelo[]  ={ 127, 90, 90, 90, 90, 90, 90, 90, 90,  90, 90, 90, 90, 90, 90, 90, 90 }; // Velocity, edited via Menu
-uint8_t inotes1[]={ 255, 255,255,255,255,255,255,255,255, 255,255,255,255,255,255,255, 255 };
-uint8_t inotes2[]={ 255, 255,255,255,255,255,255,255,255, 255,255,255,255,255,255,255, 255 };
+uint8_t inotes1[]={ 254, 254,238,85 ,255,255,255,255,255, 255,255,255,255,255,255,255, 255 };
+uint8_t inotes2[]={ 254, 254,255,255,255,255,255,255,255, 255,255,255,255,255,255,255, 255 };
+
+// Incerse Logic Step1 is Bit0, set it to 0 to activate it
+uint8_t patterns_onbeat[]  = { 255, 254, 110, 190, 230, 239, 42, 142, 255 }; // last record ( 255 ) to store the current Pattern
+uint8_t patterns_offbeat[] = { 255, 251, 187, 219, 238, 85, 155, 153, 255 }; // last record ( 255 ) to store the current Pattern
+
+uint8_t current_pattern = 0;
+
 boolean is_muted[]={ false, false,false,false,false ,false,false,false,false ,false,false,false,false 
                     ,false,false,false,false };
                     
 uint8_t volume_midi[] = { 127, 127,127,127,127, 127,127,127,127, 127,127,127,127, 127,127,127,127 };
+uint8_t attack_midi[] = { 0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0 };
 uint8_t decay_midi[] = { 127, 127,127,127,127, 127,127,127,127, 127,127,127,127, 127,127,127,127  };
 uint8_t pitch_midi[] = { 64, 64,64,64,64, 64,64,64,64, 64,64,64,64, 64,64,64,64 };
 uint8_t pan_midi[]   = { 64, 64,64,64,64, 64,64,64,64, 64,64,64,64, 64,64,64,64 };
+uint8_t pitchdecay_midi[]   = { 64, 64,64,64,64, 64,64,64,64, 64,64,64,64, 64,64,64,64 };
 
 float step_delay[] ={ 10.1,10.1,10.1,10.1, 10.1,10.1,10.1,10.1, 10.1,10.1,10.1,10.1, 10.1,10.1,10.1,10.1  ,10.1 };
 uint8_t count_instr = 17;
@@ -253,8 +264,8 @@ static uint32_t loop_cnt;
 
 
 uint8_t compare2values( uint16_t val1, uint16_t val2 ){
-  if(val1 < val2 ) return 0;
-  if(val1 > val2 ) return 2;
+  if( val1 < val2 ) return 0;
+  if( val1 > val2 ) return 2;
   return 1;
 }
 
@@ -286,10 +297,12 @@ void setup(){
   btStop();
   Sampler_Init();
   Effect_Init();
-  Effect_SetBitCrusher(1.0);
+  Effect_SetBitCrusher( 0.0f );
   
   xTaskCreatePinnedToCore( Core0Task, "Core0Task", 8000, NULL, 5, &Core0TaskHnd, 0);
 
+  step_pattern_1 =inotes1[ act_instr ];
+  step_pattern_2 =inotes2[ act_instr ];
   sequencer_new_instr( act_instr );
 
 #ifdef DEBUG_MAIN
@@ -322,6 +335,13 @@ inline void audio_task(){
     if( !i2s_write_samples(fl_sample, fr_sample )){
         // error!
     }
+}
+
+void sync_compared_values(){
+    val0_synced = compare2values( param_val0, patch_val0 );    
+    val1_synced = compare2values( param_val1, patch_val1 );    
+    val2_synced = compare2values( param_val2, patch_val2 );    
+    val3_synced = compare2values( param_val3, patch_val3 );    
 }
 
 // ###
@@ -420,21 +440,26 @@ void Core0TaskLoop(){
     //}
   }
 
+  // How is the status after loading a new patch, this should be done only once!!
   if( patch_edit_prescaler == 25 ){
-    val0_synced = compare2values( param_val0, patch_val0 );    
+    sync_compared_values();
+/*    val0_synced = compare2values( param_val0, patch_val0 );    
     val1_synced = compare2values( param_val1, patch_val1 );    
     val2_synced = compare2values( param_val2, patch_val2 );    
-    val3_synced = compare2values( param_val3, patch_val3 );    
+    val3_synced = compare2values( param_val3, patch_val3 );  
+ */     
   }
-  
+
+  // How is the status after a while, after the value crossed its old value, the value should be in sync!
   if( patch_edit_prescaler > 50 && (  val0_synced != 1 || val1_synced != 1 || val2_synced != 1 || val3_synced != 1 ) ){
-    if( val0_synced != 1 && compare2values(param_val0, patch_val0 ) != val0_synced ) val0_synced = 1;
-    if( val1_synced != 1 && compare2values(param_val1, patch_val1 ) != val1_synced ) val1_synced = 1;
-    if( val2_synced != 1 && compare2values(param_val2, patch_val2 ) != val2_synced ) val2_synced = 1;
-    if( val3_synced != 1 && compare2values(param_val3, patch_val3 ) != val3_synced ) val3_synced = 1;
+    if( val0_synced != 1 && compare2values( param_val0, patch_val0 ) != val0_synced ) val0_synced = 1;
+    if( val1_synced != 1 && compare2values( param_val1, patch_val1 ) != val1_synced ) val1_synced = 1;
+    if( val2_synced != 1 && compare2values( param_val2, patch_val2 ) != val2_synced ) val2_synced = 1;
+    if( val3_synced != 1 && compare2values( param_val3, patch_val3 ) != val3_synced ) val3_synced = 1;
   }else{
     patch_edit_prescaler +=1;  
   }
+  
   
 }
 
@@ -446,7 +471,7 @@ void Core0TaskSetup(){
   // I2C
   pinMode( SDA2, INPUT_PULLUP); 
   pinMode( SCL2, INPUT_PULLUP); 
-  I2Ctwo.begin(SDA2,SCL2, 200000 ); // SDA2 pin 0, SCL2 pin 5, works with 50.000 Hz if pinned to other Core0
+  I2Ctwo.begin( SDA2,SCL2, 200000 ); // SDA2 pin 0, SCL2 pin 5, works with 50.000 Hz if pinned to other Core0
 
   // SSD1306 OLED - Display first to be able to show Errors on the Display
   // SSD1306_SWITCHCAPVCC = generate display voltage from 3.3V internally
