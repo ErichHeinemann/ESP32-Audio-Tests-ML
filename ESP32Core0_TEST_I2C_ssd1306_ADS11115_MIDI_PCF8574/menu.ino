@@ -4,8 +4,7 @@
 // History:
 // 2021-07-05 E.Heinemann Added this Menu-File to implement the structure for the menu, step by step.
 //                        The Button underneeth the Rotary Encoder acts as a FUNCTION-Button to select something together with one of the 16 STEP-Buttons. On a Akai MPC1000/2500 this button is called Mode-Button
-
-
+// 2021-07-29 E.Heinamnn, Factory and Random Patterns implemented
 
 // 
 void change_pattern(){
@@ -107,8 +106,7 @@ void func1_but( uint8_t step_number ){
 
       if( step_number == 14 ){
         // Random Pattern
-        Serial.print( "  Random Pattern: ");
-        Serial.println( act_instr );
+        random_pattern();
         return;
       } 
       if( step_number == 15 ){
@@ -141,8 +139,7 @@ void func1_but( uint8_t step_number ){
       } 
       if( step_number == 14 ){
         // Random Pattern
-        Serial.print( "  Random Pattern: ");
-        Serial.println( act_instr );
+        random_pattern();
         return;
       } 
       if( step_number == 15 ){
