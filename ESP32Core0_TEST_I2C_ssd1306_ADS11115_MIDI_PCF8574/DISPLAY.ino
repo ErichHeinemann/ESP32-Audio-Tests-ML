@@ -31,20 +31,39 @@ void update_display_bars(  ){
     display.println( param_val0 );   
     display.fillRect(0, 9, (int) param_val0/2, 6, SSD1306_INVERSE);
   }
+
+  
   // Value 1
   if( param_name1 != no_display ){
     display.setCursor( 64, 0 );
     display.print( param_name1 );
     display.print(" ");
-    if( val1_synced != 1 ){
-      display.println( patch_val1 );   
-      display.drawRect(64, 9, (int) param_val1/2, 3, SSD1306_INVERSE);
-      display.drawRect(64, 12, (int) patch_val1/2, 3, SSD1306_INVERSE);
+
+    if( act_menuNum != 1 ){ 
+      if( val1_synced != 1 ){
+        display.println( patch_val1 );   
+        display.drawRect(64, 9, (int) param_val1/2, 3, SSD1306_INVERSE);
+        display.drawRect(64, 12, (int) patch_val1/2, 3, SSD1306_INVERSE);
+      }else{
+        display.println( param_val1 );   
+        display.fillRect(64, 9, (int) param_val1/2, 6, SSD1306_INVERSE);
+      }
     }else{
-      display.println( param_val1 );   
-      display.fillRect(64, 9, (int) param_val1/2, 6, SSD1306_INVERSE);
+      // In Menu 1 this is used to display the MIDI-Channel
+      // MIDI-Channel has Values from 1 to 16
+      if( val1_synced != 1 ){
+        display.println( patch_val1 );   
+        display.drawRect(64, 9, (int) (param_val1-1)/2, 3, SSD1306_INVERSE);
+        display.drawRect(64, 12, (int) (patch_val1-1)/2, 3, SSD1306_INVERSE);
+      }else{
+        display.println( param_val1 );   
+        display.fillRect(64, 9, (int) (patch_val1-1)/2, 6, SSD1306_INVERSE);
+      }
     }
   }
+
+
+  
   if( param_name2 != no_display ){
     display.setCursor( 0, 17 );
     display.print( param_name2 );
@@ -82,6 +101,9 @@ void update_display_bars(  ){
 
 
   if( is_muted[ act_instr ] == false ){
+  display.setCursor( 64, 50 ); 
+  display.println( step_pattern_1 );
+    
     for (int i=0; i <= 7; i++){
       if( i==4 ) j = 3; // Insert a Offset after 4 Elements
       
@@ -166,7 +188,7 @@ void update_display_bars(  ){
   
   display.setCursor( 110, 56 ); 
 
-  if( act_menuNum == 0 ){
+  if( act_menuNum < 2 ){
     display.setCursor( 0, 57 ); 
     display.println( active_track_num );
     display.setTextSize(2);             // Normal 1:1 pixel scale
