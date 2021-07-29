@@ -140,8 +140,7 @@ void Effect_Init( void ){
     mainFilterL_LP.filterCoeff = &filterGlobalC_LP;
     mainFilterR_LP.filterCoeff = &filterGlobalC_LP;
     mainFilterL_HP.filterCoeff = &filterGlobalC_HP;
-    mainFilterR_HP.filterCoeff = &filterGlobalC_HP;
-    
+    mainFilterR_HP.filterCoeff = &filterGlobalC_HP;   
 }
 
 float highpassC = 0.0f;
