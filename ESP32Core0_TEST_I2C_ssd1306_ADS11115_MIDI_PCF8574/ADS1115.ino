@@ -76,10 +76,21 @@ void ads1115red( int show_serial , uint8_t & param_val0 , uint8_t & param_val1 ,
 
     if( act_menuNum == 0 && act_instr > 0 && val0_synced == 1 ){
       // Change Pitch
-      volume_midi[ act_instr-1 ] = param_val0;
+      volume_midi[ act_instr ] = param_val0;
       Serial.print("New Volume");
       Serial.println( param_val0 );
     } 
+
+    if( act_menuNum == 1 && act_instr > 0 && val0_synced == 1 ){
+      // Change MidiNote
+      midinote_in_out[ act_instr ] = param_val0;
+    } 
+
+
+    if( act_menuNum == 2 && val0_synced == 1 ){
+      // Menu Global Effects Change Filter Frequency
+      global_biCutoff_midi = param_val0;
+    }
 
     if( act_menuNum == 4 && val0_synced == 1 ){
       // Change Main-BPM
@@ -99,9 +110,18 @@ void ads1115red( int show_serial , uint8_t & param_val0 , uint8_t & param_val1 ,
 
     if( act_menuNum == 0 && act_instr > 0 && val1_synced == 1 ){
       // Change Decay
-      decay_midi[ act_instr-1 ] = param_val1;
-      Serial.print("New Decay");
-      Serial.println( param_val1 );
+      decay_midi[ act_instr ] = param_val1;
+    }
+
+    if( act_menuNum == 1 && act_instr > 0 && val1_synced == 1 ){
+      // Change MidiChannel Out
+      param_val1 = map( adc1, 0, 17600, 1, 16 );      
+      midichannel_in_out[ act_instr ] = param_val1;
+    } 
+
+    if( act_menuNum == 2 && val1_synced == 1 ){
+      // Menu Global Effects Change Filter Resonance
+      global_biReso_midi = param_val1;
     }
 
     if( act_menuNum == 4 && val1_synced == 1){
@@ -109,8 +129,6 @@ void ads1115red( int show_serial , uint8_t & param_val0 , uint8_t & param_val1 ,
       bpm_pot_fine_midi = param_val1;
       bpm = (float) 30.0f + bpm_pot_midi*2 + ( bpm_pot_fine_midi-65 )/20.0f;
       myTimer_Delta = sequencer_calc_delay( bpm );
-      Serial.print("New Speed Fine");
-      Serial.println( param_val1 );
     } 
 
     
@@ -122,24 +140,45 @@ void ads1115red( int show_serial , uint8_t & param_val0 , uint8_t & param_val1 ,
 
     if( act_menuNum == 0 && act_instr > 0 && val2_synced == 1){
       // Change Pitch
-      pitch_midi[ act_instr-1 ] = param_val2;
-      Serial.print("New Pitch");
-      Serial.println( param_val2 );
-      // Sampler_SetSoundPitch_Midi( param_val2 );
+      pitch_midi[ act_instr ] = param_val2;
+    }
+
+    if( act_menuNum == 1 && act_instr > 0 && val2_synced == 1){
+      // Menu Instr Change Attack
+      attack_midi[ act_instr ] = param_val2;
+    }    
+
+    if( act_menuNum == 2  && val2_synced == 1){
+      // Menu Global Effects Change Bitcrush
+      global_bitcrush_midi = param_val2;
     }
     
   }
+
+  
   if( adc3 > adc3_1 +adc_slope || adc3<adc3_1 -adc_slope ){
     do_display_update = true;    
     param_val3 = map( adc3, 0, 17600, 0, 127 );
 
     if( act_menuNum == 0 && act_instr > 0 && val3_synced == 1){
-      // Change Pitch
-      pan_midi[ act_instr-1 ] = param_val3;
-      Serial.print("New Pan");
-      Serial.println( param_val3 );
-      // Sampler_SetSoundPitch_Midi( param_val2 );
+      // Menu Instr Change Pitch
+      pan_midi[ act_instr ] = param_val3;
     }
+    
+    if( act_menuNum == 1 && act_instr > 0 && val3_synced == 1){
+      // Menu Instr Change PitchDecay-MOD (FM-Pitch)
+      pitchdecay_midi[ act_instr ] = param_val3;
+    }
+    
+    if( act_menuNum == 2  && val3_synced == 1){
+      // Menu Global Effects Change Pitch-Decay-Mod, sounds like FM-Drums
+      global_playbackspeed_midi = param_val3;
+      if( global_playbackspeed_midi != global_playbackspeed_midi_old ){
+        global_playbackspeed_midi_old = global_playbackspeed_midi;
+        Sampler_SetPlaybackSpeed_Midi( global_playbackspeed_midi );
+      }
+    }
+
     
   }
 
