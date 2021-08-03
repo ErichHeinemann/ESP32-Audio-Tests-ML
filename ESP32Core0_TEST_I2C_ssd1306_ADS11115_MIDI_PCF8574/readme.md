@@ -52,8 +52,8 @@ Yes, it uses MIDI CLock to Sync and it creates sounds since around 20.July 2021
 <h3>Minor Changes and Milestones:</h3>
 2021-08-03 Accent works well, Display optimized to show the values in an acceptable way
 
-
-Lab-Board Components
+<hr>
+<h3>Lab-Board Components</h3>
 <img src="https://github.com/ErichHeinemann/ESP32-Audio-Tests-ML/raw/main/ESP32Core0_TEST_I2C_ssd1306_ADS11115_MIDI_PCF8574/ESP32%20Step%20Sequencer.png">
 
 Lab-Board on 3d-printed holder base, the PCF8574 DIL are under the OLED
