@@ -42,15 +42,25 @@ void sequencer_new_instr( uint8_t new_instr_num  ){
   //Serial.println( step_pattern_1 );
 
   // Poti-Values synchronisieren
-  // Volume
-  param_val0 = volume_midi[act_instr-1]; // Sampler_GetSoundVolume_Midi();  
-  // Decay
-  param_val1 = decay_midi[act_instr-1];
-  // Pitch 
-  param_val2 = pitch_midi[act_instr-1];
-  // Panorama
-  param_val3 = pan_midi[act_instr-1];// Sampler_GetSoundPan_Midi();
-  
+  //val0_synced = false;
+  //val1_synced = false;
+  //val2_synced = false;
+  //val3_synced = false;
+  patch_edit_prescaler = 0;
+  if( act_instr > 0 ){
+    // Volume
+    param_val0 = volume_midi[act_instr-1]; // Sampler_GetSoundVolume_Midi();  
+    // Decay
+    param_val1 = decay_midi[act_instr-1];
+    // Pitch 
+    param_val2 = pitch_midi[act_instr-1];
+    // Panorama
+    param_val3 = pan_midi[act_instr-1];// Sampler_GetSoundPan_Midi();
+  }else{
+    // Accent
+    param_val0 = veloAccent_midi;
+    param_val1 = veloInstr_midi;    
+  }
   pcf_value1 = step_pattern_1;
   pcf_value2 = step_pattern_2;
 
@@ -181,23 +191,30 @@ void sequence_process(){
 #ifdef DEBUG_SEQUENCER    
     Serial.println("sequence_process");
 #endif    
-    veloAccent = 100; // Normal Velocity by default
+    velocity = veloInstr_midi; // Normal Velocity by default
     // first Byte or first 8 Hits
     // "song_position" is the current step 
+
+    
     if( active_step<8 ){ // play notes1
       // Accent set?
       if( bitRead( inotes1[0], active_step ) == 0 ){
         // Accent is set
-        veloAccent = iVelo[0];
+        velocity = veloAccent_midi; // iVelo[0];
+        if( velocity > 127 ){
+          velocity = 127;
+        }
       } 
 
       // loop through all instruments .. But ignore Accent with 0       
       for( int i = 1; i < count_instr; i++ ){
         if( bitRead( inotes1[i], active_step ) == 0 ){
-          velocity  = round( iVelo[i] * veloAccent / 100);
+          // velocity  = veloAccent; // round( iVelo[i] * veloAccent / 100);
+          /*
           if( velocity > 127 ) {
             velocity = 127; 
           }
+          */
           MIDI.sendNoteOff( midinote_in_out[i],         0, midichannel_in_out[i]-1 ); // MIDI-Off could be removed if You trigger external analog gear. For Samplers you should keep it     
           MIDI.sendNoteOn(  midinote_in_out[i], velocity , midichannel_in_out[i]-1 );  // iSound is the array with the MIDI-Note-Number for the Pads
           Sampler_NoteOn( i-1, velocity ); // Accent "0" has no Sample to play
@@ -214,15 +231,17 @@ void sequence_process(){
     if( active_step >= 8 ){ 
        // play Notes2
       if( bitRead( inotes2[0], active_step -8 ) == 0 ){ // Accent is set
-        veloAccent = iVelo[0];
+        velocity = veloAccent_midi; // iVelo[0];
       }
       // loop through all instruments .. but ignore the Accent with 0
       for( int i = 1; i < count_instr; i++ ){
         if( bitRead( inotes2[i], ( active_step -8 ) ) == 0 ){
-          velocity  = round(iVelo[i] * veloAccent / 100);
-          if( velocity > 127 ){
+          // velocity  = veloAccent; //round(iVelo[i] * veloAccent / 100);
+          /*
+           * if( velocity > 127 ){
             velocity = 127;
           }
+          */
           MIDI.sendNoteOff( midinote_in_out[i],         0, midichannel_in_out[i]-1 ); // MIDI-Off could be removed if You trigger external analog gear. For Samplers you should keep it       
           MIDI.sendNoteOn(  midinote_in_out[i], velocity , midichannel_in_out[i]-1 ); // iSound is the array with the MIDI-Note-Number for the Pads
           Sampler_NoteOn( i-1, velocity ); // Accent "0" has no Sample to play
