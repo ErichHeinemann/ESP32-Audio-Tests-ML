@@ -6,8 +6,18 @@
 // the value of the Patch, it will be converted into one bar.
 // E.Heinemann 2021-06-04
 
+void ads1115read_first( ){
+  adc0 = ads.readADC_SingleEnded(0);
+  delay(1);
+  adc1 = ads.readADC_SingleEnded(1);
+  delay(1);
+  adc2 = ads.readADC_SingleEnded(2);
+  delay(1);
+  adc3 = ads.readADC_SingleEnded(3);
+}  
 
-void ads1115red( int show_serial , uint8_t & param_val0 , uint8_t & param_val1 , uint8_t & param_val2 , uint8_t & param_val3  ){
+  
+void ads1115read( int show_serial , uint16_t & param_val0 , uint16_t & param_val1 , uint16_t & param_val2 , uint16_t & param_val3  ){
   // store old value in a variable
   adc0_1 = adc0;
   adc1_1 = adc1;
@@ -70,117 +80,143 @@ void ads1115red( int show_serial , uint8_t & param_val0 , uint8_t & param_val1 ,
   }
  */
 
-  if(  adc0 > adc0_1 +adc_slope || adc0<adc0_1 -adc_slope ){
-    do_display_update = true;    
+  if( adc0 > adc0_1 +adc_slope || adc0<adc0_1 -adc_slope ){
     param_val0 = map( adc0, 0, 17600, 0, 127 );
-
-    if( act_menuNum == 0 && act_instr > 0 && val0_synced == 1 ){
-      // Change Pitch
-      volume_midi[ act_instr ] = param_val0;
-      Serial.print("New Volume");
-      Serial.println( param_val0 );
-    } 
-
-    if( act_menuNum == 1 && act_instr > 0 && val0_synced == 1 ){
-      // Change MidiNote
-      midinote_in_out[ act_instr ] = param_val0;
-    } 
-
-
-    if( act_menuNum == 2 && val0_synced == 1 ){
-      // Menu Global Effects Change Filter Frequency
-      global_biCutoff_midi = param_val0;
+    if( val0_synced == 1 ){
+      switch( act_menuNum ){
+        case 0:        
+          if( act_instr > 0  ){
+            volume_midi[ act_instr ] = param_val0; // Change Pitch
+          }else{
+            veloAccent_midi = param_val0;
+          }
+          break;
+        case 1:
+          if( act_instr > 0 ){
+            midinote_in_out[ act_instr ] = param_val0;  // Change MidiNote
+          } 
+          break;
+        case 2:
+            global_biCutoff_midi = param_val0; // Menu Global Effects Change Filter Frequency
+          break;
+        case 3:
+          // TODO
+          break;
+        case 4:
+            // Change Main-BPM
+            bpm_pot_midi = param_val0;
+            bpm = (float) 30.0f + bpm_pot_midi*2 + ( bpm_pot_fine_midi-65 )/20.0f;
+            myTimer_Delta = sequencer_calc_delay( bpm );
+            break;
+        default:
+          break; // Wird nicht benötigt, wenn Statement(s) vorhanden sind
+      }
     }
-
-    if( act_menuNum == 4 && val0_synced == 1 ){
-      // Change Main-BPM
-      bpm_pot_midi = param_val0;
-      bpm = (float) 30.0f + bpm_pot_midi*2 + ( bpm_pot_fine_midi-65 )/20.0f;
-      myTimer_Delta = sequencer_calc_delay( bpm );
-      Serial.print("New Speed Main");
-      Serial.println( param_val0 );
-    } 
-
+    do_display_update = true;      
   }
 
   
   if( adc1 > adc1_1 +adc_slope || adc1<adc1_1 - adc_slope ){
-    do_display_update = true;    
     param_val1 = map( adc1, 0, 17600, 0, 127 );
-
-    if( act_menuNum == 0 && act_instr > 0 && val1_synced == 1 ){
-      // Change Decay
-      decay_midi[ act_instr ] = param_val1;
-    }
-
-    if( act_menuNum == 1 && act_instr > 0 && val1_synced == 1 ){
-      // Change MidiChannel Out
-      param_val1 = map( adc1, 0, 17600, 1, 16 );      
-      midichannel_in_out[ act_instr ] = param_val1;
-    } 
-
-    if( act_menuNum == 2 && val1_synced == 1 ){
-      // Menu Global Effects Change Filter Resonance
-      global_biReso_midi = param_val1;
-    }
-
-    if( act_menuNum == 4 && val1_synced == 1){
-      // Change Main-BPM
-      bpm_pot_fine_midi = param_val1;
-      bpm = (float) 30.0f + bpm_pot_midi*2 + ( bpm_pot_fine_midi-65 )/20.0f;
-      myTimer_Delta = sequencer_calc_delay( bpm );
-    } 
-
-    
+    if( val1_synced == 1 ){
+      switch( act_menuNum ){
+        case 0:
+          if( act_instr > 0  ){
+            decay_midi[ act_instr ] = param_val1; // Change Decay
+          }else{
+            veloInstr_midi =  param_val1; 
+          }  
+          break;
+        case 1:
+          if(  act_instr > 0 ){
+            param_val1 = map( adc1, 0, 17600, 1, 16 ); // Change MidiChannel Out
+            midichannel_in_out[ act_instr ] = param_val1;
+          }
+          break;  
+        case 2:
+          global_biReso_midi = param_val1; // Menu Global Effects Change Filter Resonance
+          break;
+        case 3:
+          break;  
+        case 4:
+          // Change Main-BPM
+          bpm_pot_fine_midi = param_val1;
+          bpm = (float) 30.0f + bpm_pot_midi*2 + ( bpm_pot_fine_midi-65 )/20.0f;
+          myTimer_Delta = sequencer_calc_delay( bpm );
+          break;
+        default:
+          break; // Wird nicht benötigt, wenn Statement(s) vorhanden sind
+      }
+    }  
+    do_display_update = true; 
   }
   
+ 
   if( adc2 > adc2_1 +adc_slope || adc2<adc2_1 -adc_slope ){
-    do_display_update = true;    
     param_val2 = map( adc2, 0, 17600, 0, 127 );
-
-    if( act_menuNum == 0 && act_instr > 0 && val2_synced == 1){
-      // Change Pitch
-      pitch_midi[ act_instr ] = param_val2;
-    }
-
-    if( act_menuNum == 1 && act_instr > 0 && val2_synced == 1){
-      // Menu Instr Change Attack
-      attack_midi[ act_instr ] = param_val2;
-    }    
-
-    if( act_menuNum == 2  && val2_synced == 1){
-      // Menu Global Effects Change Bitcrush
-      global_bitcrush_midi = param_val2;
-    }
-    
+    if( val2_synced == 1 ){
+      switch( act_menuNum ){
+        case 0:
+          if( act_instr > 0 ){
+            pitch_midi[ act_instr ] = param_val2;  // Change Pitch
+          }
+          break;
+        case 1:
+          if(  act_instr > 0 ){
+            attack_midi[ act_instr ] = param_val2; // Menu Instr Change Attack
+          }    
+          break;
+        case 2:
+          global_bitcrush_midi = param_val2;
+          break;
+        case 3:
+        
+          break;
+        case 4:
+          break;
+        default:
+          break; // Wird nicht benötigt, wenn Statement(s) vorhanden sind
+      }
+    }  
+    do_display_update = true; 
   }
-
-  
-  if( adc3 > adc3_1 +adc_slope || adc3<adc3_1 -adc_slope ){
-    do_display_update = true;    
+ 
+  if( adc3 > adc3_1 +adc_slope || adc3<adc3_1 -adc_slope ){ 
     param_val3 = map( adc3, 0, 17600, 0, 127 );
-
-    if( act_menuNum == 0 && act_instr > 0 && val3_synced == 1){
-      // Menu Instr Change Pitch
-      pan_midi[ act_instr ] = param_val3;
-    }
-    
-    if( act_menuNum == 1 && act_instr > 0 && val3_synced == 1){
-      // Menu Instr Change PitchDecay-MOD (FM-Pitch)
-      pitchdecay_midi[ act_instr ] = param_val3;
-    }
-    
-    if( act_menuNum == 2  && val3_synced == 1){
-      // Menu Global Effects Change Pitch-Decay-Mod, sounds like FM-Drums
-      global_playbackspeed_midi = param_val3;
-      if( global_playbackspeed_midi != global_playbackspeed_midi_old ){
-        global_playbackspeed_midi_old = global_playbackspeed_midi;
-        Sampler_SetPlaybackSpeed_Midi( global_playbackspeed_midi );
+    if( val3_synced == 1 ){
+      switch( act_menuNum ){
+        case 0:
+          if( act_instr > 0 ){
+            // Menu Instr Change Pitch
+            pan_midi[ act_instr ] = param_val3;
+          }
+          break;
+        case 1:
+          if( act_instr > 0 ){
+            // Menu Instr Change PitchDecay-MOD (FM-Pitch)
+            pitchdecay_midi[ act_instr ] = param_val3;
+          }
+          break;
+        case 2:
+          global_playbackspeed_midi = param_val3;
+          if( global_playbackspeed_midi != global_playbackspeed_midi_old ){
+            global_playbackspeed_midi_old = global_playbackspeed_midi;
+            Sampler_SetPlaybackSpeed_Midi( global_playbackspeed_midi );
+          }
+          break;
+        case 3:
+        
+          break;
+        case 4:
+        
+          break;
+        default:
+        
+          break;
       }
     }
-
-    
-  }
+    do_display_update = true; 
+  }             
 
   if( show_serial > 0 ){
     volts0 = ads.computeVolts(adc0);
@@ -192,5 +228,5 @@ void ads1115red( int show_serial , uint8_t & param_val0 , uint8_t & param_val1 ,
     Serial.print("AIN2: "); Serial.print(adc2); Serial.print("  "); Serial.print(volts2); Serial.println("V");
     Serial.print("AIN3: "); Serial.print(adc3); Serial.print("  "); Serial.print(volts3); Serial.println("V");
   }
-  
+
 }
