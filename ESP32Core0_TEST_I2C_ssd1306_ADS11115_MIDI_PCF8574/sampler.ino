@@ -415,15 +415,15 @@ inline void Sampler_NoteOn( uint8_t note, uint8_t vol ){
         slowRelease = newSamplePlayer->signal;
     }
 
-    newSamplePlayer->samplePosF = 0.0f;
-    newSamplePlayer->samplePos  = 0;
+    newSamplePlayer->samplePosF = 4.0f * newSamplePlayer->attack_midi; // 0.0f;
+    newSamplePlayer->samplePos  = 4 * newSamplePlayer->attack_midi; // 0;
     newSamplePlayer->lastDataOut = BLOCKSIZE; /* trigger loading second half */
     
     newSamplePlayer->volume = vol * NORM127MUL * newSamplePlayer->volume_midi * NORM127MUL;
     newSamplePlayer->vel    = 1.0f;
     newSamplePlayer->dataIn = 0;
-    newSamplePlayer->sampleSeek = 44 + 2 *newSamplePlayer->attack_midi; // 16 Bit-Samples wee need a offset which fits the 2 bytes
- 
+    newSamplePlayer->sampleSeek = 44 + 4*newSamplePlayer->attack_midi; // 16 Bit-Samples wee nee
+
     memcpy( newSamplePlayer->data, newSamplePlayer->preloadData, BLOCKSIZE );
     newSamplePlayer->active = true;
     // ML newSamplePlayer->file.seek( BLOCKSIZE + 44, SeekSet ); /* seek ack to beginning -> after pre load data */
@@ -480,7 +480,7 @@ inline void Sampler_Process( float *left, float *right ){
             uint32_t dataOut = samplePlayer[i].samplePos & ((BLOCKSIZE * 2) - 1); /* going through all data and repeat */
 
             /* first byte of second half */
-            if( (dataOut >= BLOCKSIZE) && ( samplePlayer[i].lastDataOut < BLOCKSIZE )){
+            if( (dataOut >= BLOCKSIZE ) && ( samplePlayer[i].lastDataOut < BLOCKSIZE )){
                 samplePlayer[i].file.read( &samplePlayer[i].data[0], BLOCKSIZE );
             }
             /* first byte of second half */
@@ -502,6 +502,8 @@ inline void Sampler_Process( float *left, float *right ){
             signal_l += samplePlayer[i].signal * samplePlayer[i].vel * ( 1- samplePlayer[i].pan );
             signal_r += samplePlayer[i].signal * samplePlayer[i].vel *  samplePlayer[i].pan;
 
+            // uncomment to debug attack_midi
+            // Serial.println ( samplePlayer[i].samplePos  );
             // Filter per SamplePlayer?
             // ToBeDone 
 
