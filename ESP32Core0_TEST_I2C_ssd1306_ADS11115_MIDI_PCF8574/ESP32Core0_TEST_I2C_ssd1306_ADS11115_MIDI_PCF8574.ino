@@ -8,9 +8,8 @@ Test of ESP32 with a lot of additional I2C-Components connecteed to SDA/SCL on G
 3. 1x SD1306 OLED
 Die Kommunikation mit I2C erfolgt komplett über Core 0
 
-2021-07-26 E.Heinemann
-Midi Sync, ESP32 ist slave
-
+2021-07-26 E.Heinemann - Midi Sync, ESP32 ist slave
+2021-08-03 E.Heinemann - changed menu and removed some bugs
 
 Buttons:
 
@@ -113,9 +112,20 @@ uint8_t  bpm_pot_midi_old = bpm_pot_midi;
 uint8_t  bpm_pot_fine_midi =  (bpm  - ( bpm_pot_midi*2 + 30 ))*20 + 65; // range ist zu testen ...
 uint8_t  bpm_pot_fine_old_midi = bpm_pot_fine_midi;
 
+uint8_t  swing_midi = 0; // open for later time-swing or accent-pattern
+
+uint8_t  program_midi=0; // 5 Programs Bars
+uint8_t  program=0; 
+
+
 uint16_t count_ppqn = 0;
 uint8_t  veloAccent = 120;
+uint8_t  veloAccent_midi = 120;
+uint8_t  veloInstr = 100;
+uint8_t  veloInstr_midi = 100;
 uint8_t  midi_channel = 10;
+
+uint8_t  count_bars_midi=127; // 16 Bars
 uint8_t  count_bars = 16;
 
 boolean  func1_but_pressed = false; // left blue
@@ -171,13 +181,26 @@ uint8_t act_menuNum_max = 8;
 // Instr
 String pages[] = { "Volume", "Decay", "Pitch","Pan"
   , "NoteNum", "Channel", "Attack","EG"
-  , "Filter", "Reso", "BitCrush","SampSpeed"
-  , "Accent", "Normal", "-","-"
-  , "Main", "Fine", "-","-"
-  , "Bars", "-", "-","-"
-  , "Scheme", "-", "-","-"
-  , "Scale", "-", "-","-"
-  , "Sync In", "Sync Out", "-", "-"};
+  , "Filter", "Reso", "BitCru","PCMSpeed"
+  , "Accent", "Normal", "-","Set"
+  , "Main", "Fine", "Bar","Sca"
+  , "-", "-", "-","-"
+  , "-", "-", "-","-"
+  , "-", "-", "-","-"
+  , "SyncIn", "SyncOut", "-", "-"};
+
+
+String pages_accent_short[]={"Acc","Ins","Vac","-"}; // Vac = Vactrol Audio Control via LDR   
+
+String pages_short[] = { "Vol", "Dec", "Pit","Pan"
+  , "Not", "Cha", "Att","EG"
+  , "Frq", "Res", "Bit","PCM"
+  , "Acc", "Nor", "-","Set"
+  , "Tmp", "Fin", "Bar","Swi"
+  , "-", "-", "-","-"
+  , "Set", "-", "-","-"
+  , "-", "-", "-","-"
+  , "SyncIn", "SyncOut", "-", "-"};
 
 String no_display = "-";  
 
@@ -192,7 +215,7 @@ const String instrument[]      ={ "Accent", "S1", "S2" , "S3" , "S4", "S5", "S6"
 int8_t  midinote_in_out[] ={ -1,  36, 37, 38, 39, 40, 41, 42, 43,  44, 45, 46, 47, 48, 49, 50, 51 }; // MIDI-Sound, edited via Menu 50=TOM, 44=closed HH, 
 uint8_t midichannel_in_out[] ={ -1,  10,10,10,10, 10,10,10,10, 10,10,10,10, 10,10,10,10 }; // MIDI-Channel je Sound, edited via Menu 50=TOM, 44=closed HH, 
 
-uint8_t iVelo[]  ={ 127, 90, 90, 90, 90, 90, 90, 90, 90,  90, 90, 90, 90, 90, 90, 90, 90 }; // Velocity, edited via Menu
+// uint8_t iVelo[]  ={ 127, 90, 90, 90, 90, 90, 90, 90, 90,  90, 90, 90, 90, 90, 90, 90, 90 }; // Velocity, edited via Menu
 uint8_t inotes1[]={ 254, 254,238,85 ,255,255,255,255,255, 255,255,255,255,255,255,255, 255 };
 uint8_t inotes2[]={ 254, 254,255,255,255,255,255,255,255, 255,255,255,255,255,255,255, 255 };
 
@@ -217,20 +240,19 @@ uint8_t count_instr = 17;
 
 // We get some values for parameters from a Patchmanager
 // param_valX is the current value
-uint8_t param_val0, param_val1, param_val2, param_val3;
+uint16_t param_val0, param_val1, param_val2, param_val3;
 // patch_val0 is the value from the patchmanager
 // uint8_t patch_val0, patch_val1, patch_val2, patch_val3;
 // Some Values for the Patch .. only for testing
-uint8_t patch_val0 = 65;
-uint8_t patch_val1 = 65;
-uint8_t patch_val2 = 65;
-uint8_t patch_val3 = 65;
-
+uint16_t patch_val0 = volume_midi[ 1 ];
+uint16_t patch_val1 = decay_midi[ 1 ];
+uint16_t patch_val2 = pitch_midi[ 1 ];
+uint16_t patch_val3 = pan_midi[ 1 ];
 
 // Some Names for the values - only for testing
-String param_name0="Volume"; 
-String param_name1="Decay"; 
-String param_name2="Pitch"; 
+String param_name0="Vol"; 
+String param_name1="Dec"; 
+String param_name2="Pit"; 
 String param_name3="Pan"; 
 
 int16_t adc0, adc1, adc2, adc3;
@@ -419,7 +441,7 @@ void Core0TaskLoop(){
   if( ads_prescaler > 30 ){
     readPCF();  // for the 16 Steps
     readPCF3(); // for the Control-Buttons
-    ads1115red( 0 , param_val0, param_val1, param_val2, param_val3 );
+    ads1115read( 0 , param_val0, param_val1, param_val2, param_val3 );
     ads_prescaler = 0;
   }
 
@@ -475,7 +497,7 @@ void Core0TaskSetup(){
 
   // SSD1306 OLED - Display first to be able to show Errors on the Display
   // SSD1306_SWITCHCAPVCC = generate display voltage from 3.3V internally
-  if(!display.begin( SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
+  if( !display.begin( SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS) ){
     Serial.println(F("SSD1306 allocation failed"));
     for(;;); // Don't proceed, loop forever
   }
@@ -488,6 +510,8 @@ void Core0TaskSetup(){
   Serial.println("ADC Range: +/- 6.144V (1 bit = 3mV/ADS1015, 0.1875mV/ADS1115)");
   ads.begin( ADC_ADDRESS,  &I2Ctwo   );
   Serial.println("ADS1115 started");
+  ads1115read_first(); // First Read to get current values
+  sync_compared_values();  // First compare to get valid values
 }
 
 void Core0Task(void *parameter){
