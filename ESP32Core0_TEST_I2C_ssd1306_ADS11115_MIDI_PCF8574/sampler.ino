@@ -9,6 +9,7 @@
  *             , added DEBUG_SAMPLER
  *             , added sampleRate to the structure of samplePlayerS to optimize the pitch based on lower samplerates
  * 2021-07-28 E.Heinemann, added pitch-decay and pan
+ * 2021-08-03 E.Heinemann, changed Accent/normal Velocity in the code
  */
 
 #include <Arduino.h>
@@ -65,9 +66,7 @@ struct samplePlayerS{
 
     float pitchdecay = 0.0f;
     uint8_t pitchdecay_midi;
-    
-   
-    
+  
 };
 
 struct samplePlayerS samplePlayer[ SAMPLECNT ];
@@ -316,7 +315,6 @@ inline void Sampler_NoteOn( uint8_t note, uint8_t vol ){
       return;
     }
 
-
 #ifdef DEBUG_SAMPLER
     Serial.printf("note %d on volume %d\n", note, vol );
     Serial.printf("Filename: %s \n", samplePlayer[ j ].filename );    
@@ -465,6 +463,7 @@ void Sampler_SetProgram( uint8_t prog ){
   progNumber = prog % countPrograms;
   Sampler_Init();
 }
+
 inline void Sampler_Process( float *left, float *right ){
     float signal_l = 0.0f;
     signal_l += slowRelease;
