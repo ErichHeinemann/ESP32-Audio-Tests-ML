@@ -49,7 +49,7 @@ I am planning to support 5 Soundsets in the subfolder /data/0 to /data/4.
 Does it manage Midi or create any Sounds: 
 Yes, it uses MIDI CLock to Sync and it creates sounds since around 20.July 2021
 
-<h3Minor Changes and Milestones:</h3>
+<h3>Minor Changes and Milestones:</h3>
 2021-08-03 Accent works well, Display optimized to show the values in an acceptable way
 
 
