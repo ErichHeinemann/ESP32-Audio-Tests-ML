@@ -1,4 +1,5 @@
 // 2021-07-05 E.Heinemann, this file covers all functions of the sequencer. probably I have to create the sequencer and tracks as classes - perhaps as a structure.
+// 2021-08-03 E.Heinemann, changed Accent-Velocity and normal velocity
 
 // #define DEBUG_SEQUENCER
 // #define DEBUG_SEQUENCER_TIMING
@@ -42,10 +43,6 @@ void sequencer_new_instr( uint8_t new_instr_num  ){
   //Serial.println( step_pattern_1 );
 
   // Poti-Values synchronisieren
-  //val0_synced = false;
-  //val1_synced = false;
-  //val2_synced = false;
-  //val3_synced = false;
   patch_edit_prescaler = 0;
   if( act_instr > 0 ){
     // Volume
@@ -77,13 +74,10 @@ void sequencer_new_instr( uint8_t new_instr_num  ){
 float sequencer_calc_delay( float new_bpm ){
   // Delay for count_ppqn and a Array for the Step-Timer
   float tempo_delay = 60000 / ( new_bpm * scale_value[scale] * 4 ); // scale-value provides the count of Clock-Ticks per 4th note ..  normally 16th equals 6 steps * 4 to get   
-
-  // bpm_pot_midi =(int) ( new_bpm -30 ) / 2; // range 30 <-> 285 bpm mit MIDI_Values 0-127
-  // bpm_pot_fine_midi = new_bpm - ( ( bpm_pot_midi*2 ) +30 );
-  // bpm_pot_fine_midi = ( new_bpm  - ( bpm_pot_midi * 2 + 30 ) ) * 20 + 65;
-  
   // calculate the delay for every step of the 16 steps
   // TODO: This is the right place to insert some kind of "Swing"
+  
+/* // This will be a function to create Swing
   for( int i=0; i <= 16; i++ ){
     step_delay[i] = i * tempo_delay * scale_value[scale];
 #ifdef DEBUG_SEQUENCER_TIMING    
@@ -93,6 +87,7 @@ float sequencer_calc_delay( float new_bpm ){
     Serial.println( step_delay[i] );
 #endif
   }
+*/
   
 #ifdef DEBUG_SEQUENCER    
   Serial.print("tempo_delay: ");
@@ -194,8 +189,7 @@ void sequence_process(){
     velocity = veloInstr_midi; // Normal Velocity by default
     // first Byte or first 8 Hits
     // "song_position" is the current step 
-
-    
+  
     if( active_step<8 ){ // play notes1
       // Accent set?
       if( bitRead( inotes1[0], active_step ) == 0 ){
@@ -209,12 +203,6 @@ void sequence_process(){
       // loop through all instruments .. But ignore Accent with 0       
       for( int i = 1; i < count_instr; i++ ){
         if( bitRead( inotes1[i], active_step ) == 0 ){
-          // velocity  = veloAccent; // round( iVelo[i] * veloAccent / 100);
-          /*
-          if( velocity > 127 ) {
-            velocity = 127; 
-          }
-          */
           MIDI.sendNoteOff( midinote_in_out[i],         0, midichannel_in_out[i]-1 ); // MIDI-Off could be removed if You trigger external analog gear. For Samplers you should keep it     
           MIDI.sendNoteOn(  midinote_in_out[i], velocity , midichannel_in_out[i]-1 );  // iSound is the array with the MIDI-Note-Number for the Pads
           Sampler_NoteOn( i-1, velocity ); // Accent "0" has no Sample to play
@@ -236,12 +224,6 @@ void sequence_process(){
       // loop through all instruments .. but ignore the Accent with 0
       for( int i = 1; i < count_instr; i++ ){
         if( bitRead( inotes2[i], ( active_step -8 ) ) == 0 ){
-          // velocity  = veloAccent; //round(iVelo[i] * veloAccent / 100);
-          /*
-           * if( velocity > 127 ){
-            velocity = 127;
-          }
-          */
           MIDI.sendNoteOff( midinote_in_out[i],         0, midichannel_in_out[i]-1 ); // MIDI-Off could be removed if You trigger external analog gear. For Samplers you should keep it       
           MIDI.sendNoteOn(  midinote_in_out[i], velocity , midichannel_in_out[i]-1 ); // iSound is the array with the MIDI-Note-Number for the Pads
           Sampler_NoteOn( i-1, velocity ); // Accent "0" has no Sample to play
