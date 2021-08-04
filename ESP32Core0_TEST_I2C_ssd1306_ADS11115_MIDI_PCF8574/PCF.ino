@@ -1,7 +1,7 @@
 // History:
 // 2021-07-05 E.Heinemann less access to I2C, third PCF8574 with Rotary-Encoder is checked in a high frequency - Rotary Encoder provides results via Serial Monitor for now
 // 2021-08-03 E.Heinemann, added new functions for a better initialization
-#define DEBUG_PCF
+// #define DEBUG_PCF
 
 // 3 PCF8574-ICs are used
 // PCF 1 is used for the upper Row, Step 1-8 => Bit 0 - 7, it manages the LEDs and the Buttons!!
@@ -188,6 +188,7 @@ void pcf_update_leds(){
 
 void readPCF3(){
   byte tmp_pcf_value3_but = tmp_pcf_value3_1; // PCF3.read8(); - No newe Read neeeeded, the last value is in tmp_pcf_value3_1 which is faster
+  // the 8 GPIOs are compared as a byte! If this byte differs from the previous one, then check the staatus
   if( tmp_pcf_value3_1_but != tmp_pcf_value3_but ){
     for( int i=0; i <= 7; i++ ){
       if( i!=enc_pin_a && i!=enc_pin_b ){
@@ -231,7 +232,17 @@ void readPCF3(){
                 external_clock_in = false;
               }
             }              
-            
+
+            if( i==4 ){
+              // Shortcut Func1 + Extra Button to adopt all values from the pots?
+              if( func1_but_pressed = true && ( act_menuNum == 0 || act_menuNum == 1 || act_menuNum  == 2 ) ){
+                val0_synced = 1;
+                val1_synced = 1;
+                val2_synced = 1;
+                val3_synced = 1;
+              }
+            } 
+
             // Mit dem Mechanismus wissen wir nicht, ob ein Button immer noch gedrückt ist. 
             // Wird für Menü-Fastenkombis und FUNC-Buttons benötigt!!   
           }
