@@ -100,14 +100,16 @@ void ads1115read( int show_serial , uint16_t & param_val0 , uint16_t & param_val
             global_biCutoff_midi = param_val0; // Menu Global Effects Change Filter Frequency
           break;
         case 3:
-          // TODO
+          // Soundset
+          program_midi = param_val0;
+          program_tmp = map( program_midi,0,127,0,countPrograms-1 ); // 5 Sets
           break;
         case 4:
-            // Change Main-BPM
-            bpm_pot_midi = param_val0;
-            bpm = (float) 30.0f + bpm_pot_midi*2 + ( bpm_pot_fine_midi-65 )/20.0f;
-            myTimer_Delta = sequencer_calc_delay( bpm );
-            break;
+          // Change Main-BPM
+          bpm_pot_midi = param_val0;
+          bpm = (float) 30.0f + bpm_pot_midi*2 + ( bpm_pot_fine_midi-65 )/20.0f;
+          myTimer_Delta = sequencer_calc_delay( bpm );
+          break;
         default:
           break; // Wird nicht benötigt, wenn Statement(s) vorhanden sind
       }
@@ -137,6 +139,7 @@ void ads1115read( int show_serial , uint16_t & param_val0 , uint16_t & param_val
           global_biReso_midi = param_val1; // Menu Global Effects Change Filter Resonance
           break;
         case 3:
+          // Soundset
           break;  
         case 4:
           // Change Main-BPM
@@ -173,6 +176,8 @@ void ads1115read( int show_serial , uint16_t & param_val0 , uint16_t & param_val
         
           break;
         case 4:
+          count_bars_midi= param_val2;
+          count_bars = round( param_val2 / 16 );
           break;
         default:
           break; // Wird nicht benötigt, wenn Statement(s) vorhanden sind
