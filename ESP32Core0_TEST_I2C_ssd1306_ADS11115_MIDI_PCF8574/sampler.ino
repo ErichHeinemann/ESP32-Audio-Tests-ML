@@ -16,10 +16,10 @@
 #include "FS.h"
 #include <LITTLEFS.h>
 
-#define CONFIG_LITTLEFS_CACHE_SIZE 512
+#define CONFIG_LITTLEFS_CACHE_SIZE 1024
 
 /* use define to dump midi data */
-#define DEBUG_SAMPLER
+// #define DEBUG_SAMPLER
 
 // If Blocksize us set to 2048, the limit of SAMPLECNT is 12
 #define BLOCKSIZE  (2048*1) /* only multiples of 2, otherwise the rest will not work */
@@ -79,8 +79,7 @@ struct samplePlayerS samplePlayer[ SAMPLECNT ];
  * ###############################################################################################
  */
 
-uint8_t progNumber = 0; // first subdirectory in /data 
-uint8_t countPrograms = 5;
+
 
 // float global_pitch_decay = 0.0f; // good from -0.2 to +1.0
 
@@ -89,8 +88,9 @@ float slowRelease; /*!< slow releasing signal will be used when sample playback 
 
 
 void Sampler_ScanContents(fs::FS &fs, const char *dirname, uint8_t levels){
+#ifdef DEBUG_SAMPLER  
     Serial.printf("Listing directory: %s\r\n", dirname);
-
+#endif
     File root = fs.open(dirname);
     if( !root ){
         Serial.println("- failed to open directory");
@@ -104,17 +104,20 @@ void Sampler_ScanContents(fs::FS &fs, const char *dirname, uint8_t levels){
     File file = root.openNextFile();
     while( file ){
         if( file.isDirectory() ){
+#ifdef DEBUG_SAMPLER
             Serial.print("  DIR : ");
             Serial.println(file.name());
+#endif            
             if( levels ){
                 Sampler_ScanContents(fs, file.name(), levels - 1);
             }
         }else{
+#ifdef DEBUG_SAMPLER          
             Serial.print("  FILE: ");
             Serial.print(file.name());
             Serial.print("\tSIZE: ");
             Serial.println(file.size());
-
+#endif
             if( sampleInfoCount < SAMPLECNT ){
                 strncpy( samplePlayer[ sampleInfoCount ].filename, file.name(), 32);
                 sampleInfoCount ++;
@@ -160,14 +163,21 @@ inline void Sampler_Init(){
 
     sampleInfoCount = 0;
     Sampler_ScanContents(LITTLEFS, myDir.c_str() , 5);
-
-
+    for (int k = 0; k < 1000; k++ ){
+      if( !i2s_write_samples(0.0f, 0.0f )){
+        continue;
+         // error!
+      }
+    }
+  
+#ifdef DEBUG_SAMPLER
     Serial.println("---\nListSamples:");
-
+#endif
     for (int i = 0; i < sampleInfoCount; i++ ){
+//#ifdef DEBUG_SAMPLER      
         Serial.printf( "s[%d]: %s\n", i, samplePlayer[i].filename );
-
-        delay(10);
+//#endif
+        // delay(10);
 
         File f = LITTLEFS.open( samplePlayer[i].filename );
 
@@ -185,6 +195,14 @@ inline void Sampler_Init(){
                 samplePlayer[i].preloadData[j] = f.read();
                 j++;
             }
+
+            for (int k = 0; k < 1000; k++ ){
+              if( !i2s_write_samples( 0.0f, 0.0f )){
+                 // error!
+                 continue;
+              }
+            }
+
 
             samplePlayer[i].file = f; /* store file pointer for future use */
             samplePlayer[i].sampleRate = wav.sampleRate;
@@ -207,25 +225,31 @@ inline void Sampler_Init(){
     }
 
     for( int i = 0; i < SAMPLECNT; i++ ){
+        for (int k = 0; k < 1000; k++ ){
+          if( !i2s_write_samples( 0.0f, 0.0f )){
+             // error!
+             continue;
+          }
+        }      
         samplePlayer[i].sampleSeek = 0xFFFFFFFF;
         samplePlayer[i].active = false;
 
-        decay_midi[i+1] = 127;
-        samplePlayer[i].decay_midi = 64;
+        decay_midi[i+1] = 100;
+        samplePlayer[i].decay_midi = decay_midi[i+1];
         samplePlayer[i].decay = 1.0f;
 
         attack_midi[i+1] = 0;
-        samplePlayer[i].attack_midi = 0;
+        samplePlayer[i].attack_midi = attack_midi[i+1];
         
-        volume_midi[i+1] = 64;
-        samplePlayer[i].volume_midi = 127;
+        volume_midi[i+1] = 100;
+        samplePlayer[i].volume_midi = volume_midi[i+1];
 
         pan_midi[i+1] = 64;
-        samplePlayer[i].pan_midi = 64;
+        samplePlayer[i].pan_midi = pan_midi[i+1];
         samplePlayer[i].pan = 0.5;
 
         pitch_midi[i+1] = 64;
-        samplePlayer[i].pitch_midi = 64;
+        samplePlayer[i].pitch_midi = pitch_midi[i+1];
         if( samplePlayer[i].sampleRate > 0 ){
           samplePlayer[i].pitch = 1.0f / SAMPLE_RATE * samplePlayer[i].sampleRate;
         } 
@@ -465,6 +489,11 @@ void Sampler_SetProgram( uint8_t prog ){
 }
 
 inline void Sampler_Process( float *left, float *right ){
+
+    if( progNumber !=  program_tmp ){
+      Sampler_SetProgram( program_tmp );
+    }
+  
     float signal_l = 0.0f;
     signal_l += slowRelease;
     float signal_r = 0.0f;
@@ -502,7 +531,7 @@ inline void Sampler_Process( float *left, float *right ){
             signal_l += samplePlayer[i].signal * samplePlayer[i].vel * ( 1- samplePlayer[i].pan );
             signal_r += samplePlayer[i].signal * samplePlayer[i].vel *  samplePlayer[i].pan;
 
-            // uncomment to debug attack_midi
+            // uncomment to debug attack_midi and switch Audio off!
             // Serial.println ( samplePlayer[i].samplePos  );
             // Filter per SamplePlayer?
             // ToBeDone 
