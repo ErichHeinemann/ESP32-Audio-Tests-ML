@@ -1,5 +1,5 @@
 /**************************************************************************
-
+POLCA something like a Teenage Pocket Operater in the size of a Korg Volca
 
 E.Heinemann 2021-06-04
 Test of ESP32 with a lot of additional I2C-Components connecteed to SDA/SCL on GPIO 5/23
@@ -109,14 +109,19 @@ float    old_bpm = 90.5;
 uint8_t  bpm_pot_midi =(int) ( bpm - 30 ) / 2; // range 30 <-> 285 bpm mit MIDI_Values 0-127
 uint8_t  bpm_pot_midi_old = bpm_pot_midi;
 
-uint8_t  bpm_pot_fine_midi =  (bpm  - ( bpm_pot_midi*2 + 30 ))*20 + 65; // range ist zu testen ...
+uint8_t  bpm_pot_fine_midi = ( bpm - ( bpm_pot_midi*2 + 30 ))*20 + 65; // range ist zu testen ...
 uint8_t  bpm_pot_fine_old_midi = bpm_pot_fine_midi;
 
-uint8_t  swing_midi = 0; // open for later time-swing or accent-pattern
+uint8_t  swing_midi = 0; // ToDo for later time-swing or accent-pattern
 
-uint8_t  program_midi=0; // 5 Programs Bars
-uint8_t  program=0; 
+uint8_t  program_midi =0; // 5 Programs
+uint8_t  program_tmp = 0; 
+uint8_t  progNumber = 0; // first subdirectory in /data 
+uint8_t  countPrograms = 5;
 
+uint8_t  delayToMix_midi = 0.5f;
+uint8_t  delayFeedback_midi = 0.5f;
+uint8_t  delayLen_midi = 11098;
 
 uint16_t count_ppqn = 0;
 uint8_t  veloAccent = 120;
@@ -132,34 +137,32 @@ boolean  func1_but_pressed = false; // left blue
 boolean  func2_but_pressed = false; // upper blue for global menus
 boolean  func3_but_pressed = false; // 
 
-
 // Test for Display
-String   active_track_name="DUMMY";
+String   active_track_name="LCO";
 uint8_t  active_track_num = 1;
 uint16_t active_step = 0; // 96 Steps per full note, // 24 per Quaternote // 12 bei Achtelnoten, 6 bei 16tell ... Stepsequencer arbeitet mit 16tel Noten, daher 6 Clock-Signale von einem Step zum nächsten.
 
 
 #define LED_PIN 2
 // this is used to add a task to core 0
-TaskHandle_t  Core0TaskHnd ;
-
+TaskHandle_t  Core0TaskHnd;
 
 // These values are only used to make an integration with MIDI, additional analog inputs or with an Menü slightly simplier
 // The values could be 0 - 127 or floats ... 
 uint8_t global_playbackspeed = 64; // The Playbackspeed
-uint8_t global_bitcrush = 0;      // is bitcrusher active
+uint8_t global_bitcrush = 0;       // is bitcrusher active
 uint8_t global_biCutoff = 64;      // Cutoff-Frequency of the filter
-uint8_t global_biReso= 64;        // Resonance of the filter
+uint8_t global_biReso= 64;         // Resonance of the filter
 
 uint8_t global_playbackspeed_midi= 64; // The Playbackspeed
-uint8_t global_bitcrush_midi= 0;      // is bitcrusher active
+uint8_t global_bitcrush_midi= 0;       // is bitcrusher active
 uint8_t global_biCutoff_midi= 64;      // Cutoff-Frequency of the filter
 uint8_t global_biReso_midi= 64;        // Resonance of the filter
 
 uint8_t global_playbackspeed_midi_old = global_playbackspeed_midi; // The Playbackspeed
-uint8_t global_bitcrush_midi_old = global_bitcrush_midi;      // is bitcrusher active
-uint8_t global_biCutoff_midi_old = global_biCutoff_midi;      // Cutoff-Frequency of the filter
-uint8_t global_biReso_midi_old = global_biReso_midi;        // Resonance of the filter
+uint8_t global_bitcrush_midi_old = global_bitcrush_midi;           // is bitcrusher active
+uint8_t global_biCutoff_midi_old = global_biCutoff_midi;           // Cutoff-Frequency of the filter
+uint8_t global_biReso_midi_old = global_biReso_midi;               // Resonance of the filter
 
 uint8_t global_pitch_decay_midi = 64;
 uint8_t global_pitch_decay_midi_old = 64; // 64 = global_pitch_decay = 0.0f !
@@ -169,38 +172,40 @@ uint8_t act_page = 0;
 uint8_t act_instr = 1; // Pad1 Changed by Rotary Encodere
 
 // Menu
-String   menus[] = { "Instr", "Sound", "Global", "Velo", "Speed", "Bars", "Notes", "Scale", "Sync" };
-uint8_t  menuNum[] = { 0,        1,       2,        3 ,     4,       5,       6 ,    7,       8 };
-
-String act_menu=menus[ act_menuNum ];
+String   menus[] = { "Sound 1", "Sound 2", "Effects", "Soundset", "Tempo", "Load", "Save", "Sync", "Delay" };
+uint8_t  menuNum[] = { 0,          1,         2,         3 ,         4,      5,       6 ,    7,       8 };
+ 
+String  act_menu = menus[ act_menuNum ];
 
 uint8_t act_menuNum_max = 8;
 
 // Structure of "Instrument" must cover all these values
 
+/*
 // Instr
 String pages[] = { "Volume", "Decay", "Pitch","Pan"
   , "NoteNum", "Channel", "Attack","EG"
   , "Filter", "Reso", "BitCru","PCMSpeed"
-  , "Accent", "Normal", "-","Set"
-  , "Main", "Fine", "Bar","Sca"
+  , "Set", "", "-","-"
+  , "Main", "Fine", "Step","Sca"
   , "-", "-", "-","-"
   , "-", "-", "-","-"
   , "-", "-", "-","-"
   , "SyncIn", "SyncOut", "-", "-"};
-
-
+*/
+// Instrument 0 is Accent and has a differenz Menu!
 String pages_accent_short[]={"Acc","Ins","Vac","-"}; // Vac = Vactrol Audio Control via LDR   
 
+// Standard-Menus
 String pages_short[] = { "Vol", "Dec", "Pit","Pan"
   , "Not", "Cha", "Att","EG"
   , "Frq", "Res", "Bit","PCM"
-  , "Acc", "Nor", "-","Set"
-  , "Tmp", "Fin", "Bar","Swi"
-  , "-", "-", "-","-"
-  , "Set", "-", "-","-"
-  , "-", "-", "-","-"
-  , "SyncIn", "SyncOut", "-", "-"};
+  , "Set", "-", "-", "-"
+  , "Tmp", "Fin", "Steps", "Swi"
+  , "Load", "-", "-", "-"
+  , "Save", "-", "-", "-"
+  , "SyncIn", "SyncOut", "-", "-"
+  , "Dly", "Fbk", "FBK", "-" };
 
 String no_display = "-";  
 
@@ -225,17 +230,16 @@ uint8_t patterns_offbeat[] = { 255, 251, 187, 219, 238, 85, 155, 153, 255 }; // 
 
 uint8_t current_pattern = 0;
 
-boolean is_muted[]={ false, false,false,false,false ,false,false,false,false ,false,false,false,false 
-                    ,false,false,false,false };
+boolean is_muted[]={ false, false,false,false,false ,false,false,false,false ,false,false,false,false ,false,false,false,false };
                     
-uint8_t volume_midi[] = { 127, 127,127,127,127, 127,127,127,127, 127,127,127,127, 127,127,127,127 };
-uint8_t attack_midi[] = { 0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0 };
-uint8_t decay_midi[] = { 127, 127,127,127,127, 127,127,127,127, 127,127,127,127, 127,127,127,127  };
-uint8_t pitch_midi[] = { 64, 64,64,64,64, 64,64,64,64, 64,64,64,64, 64,64,64,64 };
-uint8_t pan_midi[]   = { 64, 64,64,64,64, 64,64,64,64, 64,64,64,64, 64,64,64,64 };
-uint8_t pitchdecay_midi[]   = { 64, 64,64,64,64, 64,64,64,64, 64,64,64,64, 64,64,64,64 };
+uint8_t volume_midi[]     = { 127, 127,127,127,127, 127,127,127,127, 127,127,127,127, 127,127,127,127 };
+uint8_t attack_midi[]     = { 0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0 };
+uint8_t decay_midi[]      = { 100, 100,100,100,100, 100,100,100,100, 100,100,100,100, 100,100,100,100  };
+uint8_t pitch_midi[]      = { 64, 64,64,64,64, 64,64,64,64, 64,64,64,64, 64,64,64,64 };
+uint8_t pan_midi[]        = { 64, 64,64,64,64, 64,64,64,64, 64,64,64,64, 64,64,64,64 };
+uint8_t pitchdecay_midi[] = { 64, 64,64,64,64, 64,64,64,64, 64,64,64,64, 64,64,64,64 };
 
-float step_delay[] ={ 10.1,10.1,10.1,10.1, 10.1,10.1,10.1,10.1, 10.1,10.1,10.1,10.1, 10.1,10.1,10.1,10.1  ,10.1 };
+// float step_delay[] ={ 10.1,10.1,10.1,10.1, 10.1,10.1,10.1,10.1, 10.1,10.1,10.1,10.1, 10.1,10.1,10.1,10.1  ,10.1 };
 uint8_t count_instr = 17;
 
 // We get some values for parameters from a Patchmanager
@@ -243,17 +247,18 @@ uint8_t count_instr = 17;
 uint16_t param_val0, param_val1, param_val2, param_val3;
 // patch_val0 is the value from the patchmanager
 // uint8_t patch_val0, patch_val1, patch_val2, patch_val3;
-// Some Values for the Patch .. only for testing
-uint16_t patch_val0 = volume_midi[ 1 ];
-uint16_t patch_val1 = decay_midi[ 1 ];
-uint16_t patch_val2 = pitch_midi[ 1 ];
-uint16_t patch_val3 = pan_midi[ 1 ];
+
+// First Values for the first Menu and selected Instrument
+uint16_t patch_val0 = volume_midi[ act_instr ];
+uint16_t patch_val1 = decay_midi[ act_instr ];
+uint16_t patch_val2 = pitch_midi[ act_instr ];
+uint16_t patch_val3 = pan_midi[ act_instr ];
 
 // Some Names for the values - only for testing
-String param_name0="Vol"; 
-String param_name1="Dec"; 
-String param_name2="Pit"; 
-String param_name3="Pan"; 
+String param_name0= pages_short[0];//  "Vol"; 
+String param_name1= pages_short[1]; 
+String param_name2= pages_short[2]; 
+String param_name3= pages_short[3]; 
 
 int16_t adc0, adc1, adc2, adc3;
 int16_t adc0_1, adc1_1, adc2_1, adc3_1;
@@ -279,11 +284,7 @@ uint8_t val3_synced = 0; // 0 adc-value is lower, 2 adc-value is higher, 1 = val
 int16_t val_dev_null = 0;
 
 
-static uint32_t loop_cnt;
-
-
-
-
+// static uint32_t loop_cnt;
 
 uint8_t compare2values( uint16_t val1, uint16_t val2 ){
   if( val1 < val2 ) return 0;
@@ -308,7 +309,6 @@ void setup(){
   // midiA.begin( MIDI_CHANNEL_OMNI );
   MIDISerial.begin( 31250, SERIAL_8N1, MIDIRX_PIN, MIDITX_PIN ); // midi port
   MIDI_setup();
-
   setup_i2s();
 
 #if 0
@@ -320,6 +320,11 @@ void setup(){
   Sampler_Init();
   Effect_Init();
   Effect_SetBitCrusher( 0.0f );
+
+  //Delay
+  Delay_Init();  
+
+
   
   xTaskCreatePinnedToCore( Core0Task, "Core0Task", 8000, NULL, 5, &Core0TaskHnd, 0);
 
@@ -345,13 +350,17 @@ long myTimer_Delta = sequencer_calc_delay( bpm );
 // ###
 // ### Audio-Task ###
 // ###
+float fl_sample = 0.0f;
+float fr_sample = 0.0f;
+
 inline void audio_task(){
     /* prepare out samples for processing */
-    float fl_sample = 0.0f;
-    float fr_sample = 0.0f;
+    fl_sample = 0.0f;
+    fr_sample = 0.0f;
 
     Sampler_Process( &fl_sample, &fr_sample );
     Effect_Process( &fl_sample, &fr_sample );
+    Delay_Process(&fl_sample, &fr_sample);
 
     //Don’t block the ISR if the buffer is full
     if( !i2s_write_samples(fl_sample, fr_sample )){
@@ -370,75 +379,90 @@ void sync_compared_values(){
 // ### Core 0 Loop ###
 // ###
 int16_t act_instr_tmp =  act_instr;
+uint16_t tmp_x = 0;
+
 void Core0TaskLoop(){
   // put your loop stuff for core0 here
 
-  // 0 Instrument
-  if( act_menuNum == 0 ){
-    // Select new Instrument
-    act_instr_tmp =  readPCF_rotary_fast( act_instr );
-    if( act_instr_tmp != act_instr ){
-      if(  act_instr_tmp<0 ){
-        act_instr_tmp = 16; 
-      }
-      if( act_instr_tmp>16 ){
-        act_instr_tmp = 0; // ACC
-      }
-      // store old Instrument-Beats
-      // TODO
-      sequencer_new_instr( act_instr_tmp );
-    }
-  }
 
-  // 1 Sound
-  if( act_menuNum == 1 ){
-    uint16_t tmp_x =  readPCF_rotary_fast( 1 *2 );
-  }  
-  // 2 Global
-  if( act_menuNum == 2 ){
-    uint16_t tmp_x =  readPCF_rotary_fast( 1 *2 );
-  } 
-  // 3 Velo
-  if( act_menuNum == 3 ){
-    uint16_t tmp_x =  readPCF_rotary_fast( 1 *2 );
-  } 
-  // 4 Speed
-  if( act_menuNum == 4 ){
-    // Change Speed by Buttons or Rotary
-    old_bpm = bpm;
-    uint16_t tmp_bpm =  readPCF_rotary_fast( bpm *2 );
-    bpm = 0.5f * tmp_bpm;
-    if( bpm != old_bpm ){
-      if( bpm < 30.0f ){
-        bpm = 30.0f;
-        // sequencer_new_instr( act_instr_tmp );
-      }
-      if( bpm > 285.0f ){
-        bpm = 285.0f;
-        // sequencer_new_instr( act_instr_tmp );
-      }
-      myTimer_Delta = sequencer_calc_delay( bpm );
-    }
-  }
-  // 5 Bars
-  if( act_menuNum == 5 ){
-    uint16_t tmp_x =  readPCF_rotary_fast( 1 *2 );
-  } 
-  // 6 Notes
-  if( act_menuNum == 6 ){
-    uint16_t tmp_x =  readPCF_rotary_fast( 1 *2 );
-  }
-  // 7 Scale
-  if( act_menuNum == 7 ){
-    uint16_t tmp_x =  readPCF_rotary_fast( 1 *2 );
-  }
-  // 8 Sync
-  if( act_menuNum == 8 ){
-    uint16_t tmp_x =  readPCF_rotary_fast( 1 *2 );
-  }
+  // Check Rotary-Encoder-Movements
+  switch( act_menuNum ){
+       case 0:
+        act_instr_tmp =  readPCF_rotary_fast( act_instr );
+        if( act_instr_tmp != act_instr ){
+          if( act_instr_tmp<0 ){
+            act_instr_tmp = 16; 
+          }
+          if( act_instr_tmp>16 ){
+            act_instr_tmp = 0; // ACC
+          }
+          // store old Instrument-Beats
+          // TODO
+          sequencer_new_instr( act_instr_tmp );
+        }
+        break;
+     
+      case 1:
+        // Select new Instrument
+        act_instr_tmp =  readPCF_rotary_fast( act_instr );
+        if( act_instr_tmp != act_instr ){
+          if( act_instr_tmp<0 ){
+            act_instr_tmp = 16; 
+          }
+          if( act_instr_tmp>16 ){
+            act_instr_tmp = 0; // ACC
+          }
+          // store old Instrument-Beats
+          // TODO
+          sequencer_new_instr( act_instr_tmp );
+        }
 
+        break;
+        
+      case 2: // Global   
+        // Filterfrequency
+        tmp_x =  readPCF_rotary_fast( 1 *2 );
+        break;
+          
+      case 3:  
+        // Soundset
+         program_tmp =  readPCF_rotary_fast( program_tmp );
+         if( program_tmp >= countPrograms ){
+           program_tmp = 0;
+         }
+         // program_tmp = map( program_midi,0,127,0,countPrograms-1 ); // 5 Sets );        
+        break;
+  
+      case 4: // Tempo BPM
+        // Change Speed by Buttons or Rotary
+        old_bpm = bpm;
+        uint16_t tmp_bpm =  readPCF_rotary_fast( bpm *2 );
+        bpm = 0.5f * tmp_bpm;
+        if( bpm != old_bpm ){
+          if( bpm < 30.0f ){
+            bpm = 30.0f;
+          }
+          if( bpm > 285.0f ){
+            bpm = 285.0f;
+          }
+          myTimer_Delta = sequencer_calc_delay( bpm );
+        }
+        break;
+/*      case 5: // Bars
+        tmp_x =  readPCF_rotary_fast( 1 *2 );    
+        break;
+      case 8: // Sync  
+        // 8 Sync
+        tmp_x =  readPCF_rotary_fast( 1 *2 );
+        break;
+     default:
+        tmp_x = 0;
+        break;
+   */     
+   }  
+ 
   ads_prescaler +=1;
-  if( ads_prescaler > 30 ){
+  if( ads_prescaler > 70 ){
     readPCF();  // for the 16 Steps
     readPCF3(); // for the Control-Buttons
     ads1115read( 0 , param_val0, param_val1, param_val2, param_val3 );
@@ -456,9 +480,10 @@ void Core0TaskLoop(){
   if( playBeats==true ){
     //display_prescaler_fast +=1;
     //if( display_prescaler_fast> 6 && do_display_update_fast== true ){
-      pcf_update_leds();
-     // do_display_update_fast = false;
-     // display_prescaler_fast = 0;
+    pcf_update_leds();
+    // do_display_update_fast = false;
+    
+    // display_prescaler_fast = 0;
     //}
   }
 
@@ -532,12 +557,12 @@ void Core0Task(void *parameter){
 // ###
 void loop(){
   audio_task();
-  loop_cnt ++;
-  if( loop_cnt >= SAMPLE_RATE ){
-      loop_cnt = 0;
+  // loop_cnt ++;
+  // if( loop_cnt >= SAMPLE_RATE ){
+      // loop_cnt = 0;
       // loop_1Hz();
       // Was soll man in diesem Loop noch machen?
-  }
+  //}
 
   // Stepsequencer
   cur_time =  millis();
