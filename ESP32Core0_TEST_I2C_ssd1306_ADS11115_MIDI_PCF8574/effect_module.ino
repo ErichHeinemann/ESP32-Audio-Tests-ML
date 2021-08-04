@@ -5,6 +5,7 @@
  *
  * Author: Marcel Licence
  */
+// #define DEBUG_EFFECTS
 
 struct filterCoeffT{
     float aNorm[2] = {0.0f, 0.0f};
@@ -211,15 +212,21 @@ void Effect_Process( float *left, float *right ){
 void Effect_SetBiCutoff(float value ){
     highpassC = value >= 0.5 ? (value - 0.5f) * 2.0f : 0.0f;
     lowpassC = value <= 0.5 ? (value) * 2.0f : 1.0f;
+#ifdef DEBUG_MENU     
     Serial.printf("Filter TP: %0.2f, HP: %02f\n", lowpassC, highpassC);
+#endif    
 }
 
 void Effect_SetBiReso(float value ){
     filtReso =  0.5f + 10 * value * value * value; /* min q is 0.5 here */
+#ifdef DEBUG_MENU     
     Serial.printf("main filter reso: %0.3f\n", filtReso);
+#endif    
 }
 
 void Effect_SetBitCrusher( float value ){
     bitCrusher = pow(2, -32.0f * value);
+#ifdef DEBUG_MENU     
     Serial.printf("main filter bitCrusher: %0.3f\n", bitCrusher);
+#endif
 }
