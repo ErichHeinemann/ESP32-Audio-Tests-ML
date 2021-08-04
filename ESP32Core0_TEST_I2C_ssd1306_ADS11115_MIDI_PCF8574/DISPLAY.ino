@@ -19,23 +19,35 @@ void update_display_bars(  ){
 
   // display.setTextSize(2);             // Normal 1:1 pixel scale
   // If the values are not synced, then show both
-  display.setCursor( 0, 0 );
-  display.print(( param_name0 ));
+
     //display.print(" ");
     //display.println( param_val0 );      
   if( val0_synced != 1 ){
     // display.println( patch_val0 );   
+    display.setCursor( 0, 0 );
+    display.print(( param_name0 ));    
     display.drawRect(20, 1, (int) param_val0/3, 3, SSD1306_INVERSE);
     display.drawRect(20, 4, (int) patch_val0/3, 3, SSD1306_INVERSE);
   }else{
     switch( act_menuNum ){
       case 1:
-          display.setCursor( 22, 0 ); // Midi-Notenumber
-          display.print( param_val0 );
+        display.setCursor( 0, 0 );
+        display.print(( param_name0 ));      
+        display.setCursor( 22, 0 ); // Midi-Notenumber
+        display.print( param_val0 );
         break;
+      case 3: // Soundset
+        display.setTextSize(2); 
+        display.setCursor( 0, 0 );
+        display.print( "Soundset " );
+        display.print( progNumber );
+        display.setTextSize(1);         
+        break;  
       default:
-       display.fillRect(20, 1, (int) param_val0/3, 6, SSD1306_INVERSE);
-       break;
+        display.setCursor( 0, 0 );
+        display.print(( param_name0 ));      
+        display.fillRect(20, 1, (int) param_val0/3, 6, SSD1306_INVERSE);
+        break;
     }
   }
 
@@ -77,18 +89,11 @@ void update_display_bars(  ){
       display.drawRect(20, start_row2+4, (int) patch_val2/3, 3, SSD1306_INVERSE);
     }else{
       switch( act_menuNum ){
-        case 0:        
-          display.fillRect(20, start_row2+1, (int) param_val2/3, 6, SSD1306_INVERSE);
-          break;
-        case 1:
-          display.fillRect(20, start_row2+1, (int) param_val2/3, 6, SSD1306_INVERSE);
-          break;
-        case 2:
-          display.fillRect(20, start_row2+1, (int) param_val2/3, 6, SSD1306_INVERSE);
-          break;
         case 4:  
-          display.setCursor( 22, 0 ); // Counht Bars
-          display.print( param_val2 );          
+        // Count Steps - normally 16 Steps
+          display.setCursor( 26, start_row2 ); // Count Bars
+          display.print( count_bars ); 
+          break;         
         default:
           display.fillRect(20, start_row2+1, (int) param_val2/3, 6, SSD1306_INVERSE);
           break; // Wird nicht benötigt, wenn Statement(s) vorhanden sind
@@ -110,7 +115,7 @@ void update_display_bars(  ){
   }
 
   // Step-Positions
-  uint8_t offset=29; //35; 
+  uint8_t offset=25; //35; 
   uint8_t step_width  =15;
   uint8_t step_height =5;
   // Upper 8 & lower 8 Steps
@@ -141,16 +146,6 @@ void update_display_bars(  ){
         display.fillRect( i *step_width +j , offset+1+step_height, step_width-2, step_height, SSD1306_INVERSE);
       }
   
-      /*
-      // highlight the active step
-      if( active_step < 8 && active_step == i ){
-        display.drawLine( i *step_width +j +2, offset+2, i *step_width -5 +j +step_width, offset+2, SSD1306_INVERSE );   
-      }
-      if( active_step >= 8 && active_step-8 == i ){
-        display.drawLine( i *step_width +j +2, offset+3+step_height, i *step_width -5 +j +step_width, offset+3+step_height, SSD1306_INVERSE );    
-      }
-      */
-
     }
   }else{
     display.setTextSize(2);
@@ -161,18 +156,18 @@ void update_display_bars(  ){
   }
 
   // Current Menu
-  display.setCursor( 100, 56 ); 
-
+  display.setCursor( 68, 40); 
+//  display.setCursor( 100, 56 ); 
   display.println( act_menu );
   // display.println( "Inst");
 
 
   // Status 
 
-    // and Speed
+    // and Tempo Menu
   if( act_menuNum == 4 ){
     display.setTextSize(1); 
-    display.setCursor( 20, 50 ); 
+    display.setCursor( 20, 40 ); 
     if( playBeats == true ){
       // Play
       display.print( ">");
@@ -185,8 +180,10 @@ void update_display_bars(  ){
     display.setTextSize(2); 
     display.setCursor( 30, 50 ); 
     display.print( bpm );
-    display.setTextSize(1);     
+    display.setTextSize(1);    
+    display.print( "bpm" );
   }else{
+    // all other menus
     display.setCursor( 56, 57 ); 
     if( playBeats == true ){
       // Play
@@ -198,8 +195,10 @@ void update_display_bars(  ){
     // Recording?
     // display.fillCircle( 69, 59, 4, SSD1306_INVERSE);
     display.setTextSize(1); 
-    display.setCursor( 69, 57 ); 
+    display.setCursor( 72, 57 ); 
     display.print( bpm );
+    display.print( "bpm" );
+    
   }
 
   
@@ -225,6 +224,14 @@ void update_display_bars(  ){
   digitalWrite( LED_PIN, HIGH ); // Low
 
 }
+
+
+
+
+
+// ##############################################
+// OLD Version used in the Videos 1-3
+// ##############################################
 
 
 void update_display_bars_alt(  ){
