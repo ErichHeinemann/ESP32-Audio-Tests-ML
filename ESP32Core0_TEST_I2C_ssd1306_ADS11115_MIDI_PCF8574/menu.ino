@@ -8,6 +8,8 @@
 // 2021-08-03 E.Heinemann, changed Menu-Structure
 
 
+// #define DEBUG_MENU
+
 // 
 void change_pattern(){
     // Select a  Default-Pattern 
@@ -37,9 +39,10 @@ void change_pattern(){
       inotes1[ act_instr ] = step_pattern_1;
       inotes2[ act_instr ] = step_pattern_2;           
     }
-    
+#ifdef DEBUG_MENU 
     Serial.print( "  New-Pattern: ");
     Serial.println( current_pattern );
+#endif    
     return;
 }
 
@@ -81,10 +84,12 @@ void random_pattern(){
 
 
 void func1_but( uint8_t step_number ){
+#ifdef DEBUG_MENU  
   Serial.print( "  act menu: ");
   Serial.print( act_menuNum);
   Serial.print( "  func_but:");
   Serial.println( step_number );
+#endif
 
   // Instrument-Menu
   if( act_menuNum == 0 ){
@@ -107,8 +112,10 @@ void func1_but( uint8_t step_number ){
     }else{
       // mute / unmute Instrument
       if( step_number == 12 ){
+#ifdef DEBUG_MENU       
         Serial.print( "  mute:");
         Serial.println( act_instr );
+#endif
         is_muted[act_instr] = ! is_muted[act_instr];  
         return;
       } 
@@ -125,8 +132,10 @@ void func1_but( uint8_t step_number ){
       } 
       if( step_number == 15 ){
         //  Additional Sound-Params
+#ifdef DEBUG_MENU       
         Serial.print( "   Additional Sound-Params: ");
         Serial.println( act_instr );
+#endif        
         changeMenu( 1 );
         return;
       } 
@@ -142,8 +151,10 @@ void func1_but( uint8_t step_number ){
     }else{
       // mute / unmute Instrument
       if( step_number == 12 ){
+#ifdef DEBUG_MENU        
         Serial.print( "  mute:");
         Serial.println( act_instr );
+#endif        
         is_muted[act_instr] = ! is_muted[act_instr];  
         return;
       } 
@@ -158,8 +169,10 @@ void func1_but( uint8_t step_number ){
       } 
       if( step_number == 15 ){
         //  Additional Sound-Params
+#ifdef DEBUG_MENU       
         Serial.print( "   Additional Sound-Params: ");
         Serial.println( act_instr );
+#endif
         changeMenu( 0 );
         return;
       } 
@@ -203,23 +216,29 @@ void func1_but( uint8_t step_number ){
 
 void func2_but( uint8_t step_number ){
  // 
+ 
+#ifdef DEBUG_MENU 
  Serial.print("Func2:"); 
  Serial.println( step_number ); 
-
+#endif
   if( step_number <8 ){
     changeMenu( step_number );  
   }
 
   if( step_number == 15 ){
+#ifdef DEBUG_MENU    
     Serial.print( "  next Menu:");
     Serial.println( act_instr );
+#endif    
     act_menuNum = act_menuNum+1; 
     changeMenu(); 
     return;
   } 
   if( step_number == 14 ){
+#ifdef DEBUG_MENU    
     Serial.print( "  prevMenu:");
     Serial.println( act_instr );
+#endif    
     if( act_menuNum > 0 ){
       act_menuNum = act_menuNum-1;
     }else{
@@ -242,11 +261,14 @@ void changeMenu(){
   //Serial.println( "  changeMenu()");
 }
 
-
+// #########################################################
+// ##
+// ## Change Menu
+// ##
+// #########################################################
 
 void changeMenu( uint8_t new_menu_num ){
   // Function is coupled to Core 0
-
 
   val1_synced = false;
   val2_synced = false;
@@ -330,7 +352,7 @@ void changeMenu( uint8_t new_menu_num ){
     // patch_val0 = bpm_pot_midi;
     // patch_val1 = bpm_pot_fine_midi;
     // patch_val2 = count_bars_midi;
-    patch_val3 = program_midi;
+    patch_val0 = program_midi;
     
   }
 
@@ -351,7 +373,7 @@ void changeMenu( uint8_t new_menu_num ){
   param_name3 = pages[ act_menuNum*4 +3 ];
   */
 
-  if( act_menuNum==0 && act_instr==0){
+  if( act_menuNum==0 && act_instr==0 ){
     param_name0 = pages_accent_short[ 0 ];
     param_name1 = pages_accent_short[ 1 ];
     param_name2 = pages_accent_short[ 2 ];
@@ -363,8 +385,9 @@ void changeMenu( uint8_t new_menu_num ){
     param_name3 = pages_short[ act_menuNum*4 +3 ];
   }
   act_menu = menus[ act_menuNum ];
+#ifdef DEBUG_MENU 
   Serial.println( "  changeMenu()");
-
+#endif
   sync_compared_values();
   
 }
