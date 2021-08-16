@@ -51,6 +51,7 @@ Yes, it uses MIDI CLock to Sync and it creates sounds since around 20.July 2021
 
 <h3>Minor Changes and Milestones:</h3>
 2021-08-03 Accent works well, Display optimized to show the values in an acceptable way
+2021-08-15 Change of Soundset works, Reverb works, Delay works and alle effects are controlable by the Pots and Buttons, SSD1306 and SH1106 are both supported. I replaced the small 0.96" SSD1306 display with a 1.3" SH1106!
 
 <hr>
 <h3>Lab-Board Components</h3>
