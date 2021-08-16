@@ -6,6 +6,8 @@
 //                        The Button underneeth the Rotary Encoder acts as a FUNCTION-Button to select something together with one of the 16 STEP-Buttons. On a Akai MPC1000/2500 this button is called Mode-Button
 // 2021-07-29 E.Heinemann, Factory and Random Patterns implemented
 // 2021-08-03 E.Heinemann, changed Menu-Structure
+// 2021-08-16 E.Heinemann, changed Menu-Structure
+
 
 
 // #define DEBUG_MENU
@@ -221,7 +223,7 @@ void func2_but( uint8_t step_number ){
  Serial.print("Func2:"); 
  Serial.println( step_number ); 
 #endif
-  if( step_number <8 ){
+  if( step_number <9 ){
     changeMenu( step_number );  
   }
 
@@ -333,7 +335,7 @@ void changeMenu( uint8_t new_menu_num ){
   }
   
 
-  // Global Effects-Menu
+  // Global Effects 1-Menu
   if( act_menuNum ==2 ){    
     // Filter-Freq
     patch_val0 = global_biCutoff_midi;
@@ -345,19 +347,26 @@ void changeMenu( uint8_t new_menu_num ){
     patch_val3 = global_playbackspeed_midi;    
   }
 
-  // Volume-Menu Volume for Accent-Steps and Normal Steps as a Factor, 
+  // Global Effects 2-Menu
   if( act_menuNum ==3 ){    
-    // "Acc", "Nor", "-","Set"
-    // Accent-Volume
-    // patch_val0 = bpm_pot_midi;
-    // patch_val1 = bpm_pot_fine_midi;
-    // patch_val2 = count_bars_midi;
-    patch_val0 = program_midi;
-    
+   // Delay-Mix
+    patch_val0 = delayToMix_midi;
+    // Delay Feedback
+    patch_val1 = delayFeedback_midi;
+    // length
+    patch_val2 = delayLen_midi;
+    // Reverb
+    // patch_val3 = rev_level_midi;
+
+  }
+
+  // Soundset-Menu, 
+  if( act_menuNum ==4 ){    
+    patch_val0 = program_midi;   
   }
 
   // Speed-Menu
-  if( act_menuNum ==4 ){    
+  if( act_menuNum == 5 ){    
     // Main-Speed
     patch_val0 = bpm_pot_midi;
     // Fine Speed Adjust
@@ -366,12 +375,6 @@ void changeMenu( uint8_t new_menu_num ){
     patch_val3 = swing_midi;
     
   }
-  /*
-  param_name0 = pages[ act_menuNum*4    ];
-  param_name1 = pages[ act_menuNum*4 +1 ];
-  param_name2 = pages[ act_menuNum*4 +2 ];
-  param_name3 = pages[ act_menuNum*4 +3 ];
-  */
 
   if( act_menuNum==0 && act_instr==0 ){
     param_name0 = pages_accent_short[ 0 ];
@@ -385,6 +388,7 @@ void changeMenu( uint8_t new_menu_num ){
     param_name3 = pages_short[ act_menuNum*4 +3 ];
   }
   act_menu = menus[ act_menuNum ];
+  
 #ifdef DEBUG_MENU 
   Serial.println( "  changeMenu()");
 #endif
