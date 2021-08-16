@@ -190,24 +190,9 @@ void Effect_Process( float *left, float *right ){
         int32_t ur = *right * bitCrusher * (1 << 29);
         *right = ((float)ur) / (bitCrusher * (float)(1 << 29));
     }
-
-  if( global_biCutoff_midi != global_biCutoff_midi_old ){
-    global_biCutoff_midi_old = global_biCutoff_midi;
-    Effect_SetBiCutoff( global_biCutoff_midi *NORM127MUL );
-  } 
-
-  if( global_biReso_midi != global_biReso_midi_old ){
-    global_biReso_midi_old = global_biReso_midi;
-    Effect_SetBiReso( global_biReso_midi *NORM127MUL );
-    
-  } 
-
-  if( global_bitcrush_midi != global_bitcrush_midi_old ){
-    global_bitcrush_midi_old = global_bitcrush_midi;
-    Effect_SetBitCrusher( global_bitcrush_midi *NORM127MUL );
-  } 
-   
 }
+
+
 
 void Effect_SetBiCutoff(float value ){
     highpassC = value >= 0.5 ? (value - 0.5f) * 2.0f : 0.0f;
@@ -230,3 +215,21 @@ void Effect_SetBitCrusher( float value ){
     Serial.printf("main filter bitCrusher: %0.3f\n", bitCrusher);
 #endif
 }
+
+void Effect_Sync_Values(){
+  
+  // Sync the Values with the MIDI-Values created by the other Core
+  if( global_biCutoff_midi != global_biCutoff_midi_old ){
+    global_biCutoff_midi_old = global_biCutoff_midi;
+    Effect_SetBiCutoff( global_biCutoff_midi *NORM127MUL );
+  } 
+  if( global_biReso_midi != global_biReso_midi_old ){
+    global_biReso_midi_old = global_biReso_midi;
+    Effect_SetBiReso( global_biReso_midi *NORM127MUL );
+  } 
+  if( global_bitcrush_midi != global_bitcrush_midi_old ){
+    global_bitcrush_midi_old = global_bitcrush_midi;
+    Effect_SetBitCrusher( global_bitcrush_midi *NORM127MUL );
+  } 
+  
+}  
