@@ -33,56 +33,12 @@ void ads1115read( int show_serial , uint16_t & param_val0 , uint16_t & param_val
   // delay(1);
   adc3 = ( adc3*1 + ads.readADC_SingleEnded(3)  ) / 2;
 
-/* Better:
-  // fetch new values with a slightly lowpass and better precision
-  adc0 = ( adc0*2 + ads.readADC_SingleEnded(0) + ads.readADC_SingleEnded(0) ) / 4;
-  // delay(1);
-  adc1 = ( adc1*2 + ads.readADC_SingleEnded(1) + ads.readADC_SingleEnded(1) ) / 4;
-  // delay(1);
-  adc2 = ( adc2*2 + ads.readADC_SingleEnded(2) + ads.readADC_SingleEnded(2) ) / 4;
-  // delay(1);
-  adc3 = ( adc3*2 + ads.readADC_SingleEnded(3) + ads.readADC_SingleEnded(3) ) / 4;
-*/
-
-/*
-  if( do_display_update == false )&& ( adc0 > adc0_1 +adc_slope || adc0<adc0_1 -adc_slope   ) ){
-    do_display_update = true;    
-    param_val0 = map( adc0, 0, 17600, 0, 127 );
-  }
-  if( do_display_update == false && ( adc1 > adc1_1 +adc_slope || adc1<adc1_1 - adc_slope  ) ){
-    do_display_update = true;    
-    param_val1 = map( adc1, 0, 17600, 0, 127 );
-  }
-  
-  if( do_display_update == false && ( adc2 > adc2_1 +adc_slope || adc2<adc2_1 -adc_slope   ) ){
-    do_display_update = true;    
-    param_val2 = map( adc2, 0, 17600, 0, 127 );
-
-    if( act_menuNum == 0 && act_instr > 0 ){
-      // Change Pitch
-      pitch_midi[ act_instr-1 ] = param_val2;
-      Serial.print("New Pitch");
-      Serial.println( param_val2 );
-      // Sampler_SetSoundPitch_Midi( param_val2 );
-    }
-    
-  }
-  if( do_display_update == false && ( adc3 > adc3_1 +adc_slope || adc3<adc3_1 -adc_slope   ) ){
-    do_display_update = true;    
-    param_val3 = map( adc3, 0, 17600, 0, 127 );
-  }
-
-  if( do_display_update == true ){
-    param_val0 = map( adc0, 0, 17600, 0, 127 );
-    param_val1 = map( adc1, 0, 17600, 0, 127 );
-    param_val2 = map( adc2, 0, 17600, 0, 127 );
-    param_val3 = map( adc3, 0, 17600, 0, 127 );
-  }
- */
 
   if( adc0 > adc0_1 +adc_slope || adc0<adc0_1 -adc_slope ){
-    param_val0 = map( adc0, 0, 17600, 0, 127 );
+    param_val0 = map( adc0, 0, 17610, 0, 127 );
+
     if( val0_synced == 1 ){
+      
       switch( act_menuNum ){
         case 0:        
           if( act_instr > 0  ){
@@ -97,14 +53,17 @@ void ads1115read( int show_serial , uint16_t & param_val0 , uint16_t & param_val
           } 
           break;
         case 2:
-            global_biCutoff_midi = param_val0; // Menu Global Effects Change Filter Frequency
+          global_biCutoff_midi = param_val0; // Menu Global Effects Change Filter Frequency
           break;
         case 3:
+          delayToMix_midi  = param_val0; // Menu Global Effects Change Filter Frequency
+          break;
+        case 4:
           // Soundset
           program_midi = param_val0;
           program_tmp = map( program_midi,0,127,0,countPrograms-1 ); // 5 Sets
           break;
-        case 4:
+        case 5:
           // Change Main-BPM
           bpm_pot_midi = param_val0;
           bpm = (float) 30.0f + bpm_pot_midi*2 + ( bpm_pot_fine_midi-65 )/20.0f;
@@ -119,7 +78,7 @@ void ads1115read( int show_serial , uint16_t & param_val0 , uint16_t & param_val
 
   
   if( adc1 > adc1_1 +adc_slope || adc1<adc1_1 - adc_slope ){
-    param_val1 = map( adc1, 0, 17600, 0, 127 );
+    param_val1 = map( adc1, 0, 17610, 0, 127 );
     if( val1_synced == 1 ){
       switch( act_menuNum ){
         case 0:
@@ -139,9 +98,12 @@ void ads1115read( int show_serial , uint16_t & param_val0 , uint16_t & param_val
           global_biReso_midi = param_val1; // Menu Global Effects Change Filter Resonance
           break;
         case 3:
-          // Soundset
+          delayFeedback_midi  = param_val1; // Menu Global Effects Change Filter Resonance
           break;  
         case 4:
+          // Soundset
+          break;  
+        case 5:
           // Change Main-BPM
           bpm_pot_fine_midi = param_val1;
           bpm = (float) 30.0f + bpm_pot_midi*2 + ( bpm_pot_fine_midi-65 )/20.0f;
@@ -156,7 +118,7 @@ void ads1115read( int show_serial , uint16_t & param_val0 , uint16_t & param_val
   
  
   if( adc2 > adc2_1 +adc_slope || adc2<adc2_1 -adc_slope ){
-    param_val2 = map( adc2, 0, 17600, 0, 127 );
+    param_val2 = map( adc2, 0, 17610, 0, 127 );
     if( val2_synced == 1 ){
       switch( act_menuNum ){
         case 0:
@@ -173,9 +135,9 @@ void ads1115read( int show_serial , uint16_t & param_val0 , uint16_t & param_val
           global_bitcrush_midi = param_val2;
           break;
         case 3:
-        
+          delayLen_midi = param_val2;
           break;
-        case 4:
+        case 5:
           count_bars_midi= param_val2;
           count_bars = round( param_val2 / 16 );
           break;
@@ -187,7 +149,7 @@ void ads1115read( int show_serial , uint16_t & param_val0 , uint16_t & param_val
   }
  
   if( adc3 > adc3_1 +adc_slope || adc3<adc3_1 -adc_slope ){ 
-    param_val3 = map( adc3, 0, 17600, 0, 127 );
+    param_val3 = map( adc3, 0, 17610, 0, 127 );
     if( val3_synced == 1 ){
       switch( act_menuNum ){
         case 0:
@@ -210,7 +172,7 @@ void ads1115read( int show_serial , uint16_t & param_val0 , uint16_t & param_val
           }
           break;
         case 3:
-        
+          rev_level_midi = param_val3;
           break;
         case 4:
         
@@ -222,7 +184,7 @@ void ads1115read( int show_serial , uint16_t & param_val0 , uint16_t & param_val
     }
     do_display_update = true; 
   }             
-
+ /*
   if( show_serial > 0 ){
     volts0 = ads.computeVolts(adc0);
     volts1 = ads.computeVolts(adc1);
@@ -233,5 +195,6 @@ void ads1115read( int show_serial , uint16_t & param_val0 , uint16_t & param_val
     Serial.print("AIN2: "); Serial.print(adc2); Serial.print("  "); Serial.print(volts2); Serial.println("V");
     Serial.print("AIN3: "); Serial.print(adc3); Serial.print("  "); Serial.print(volts3); Serial.println("V");
   }
+  */
 
 }
