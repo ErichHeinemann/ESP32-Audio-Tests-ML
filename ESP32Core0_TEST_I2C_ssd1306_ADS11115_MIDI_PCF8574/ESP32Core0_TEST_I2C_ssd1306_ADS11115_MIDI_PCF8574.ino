@@ -6,22 +6,18 @@ Test of ESP32 with a lot of additional I2C-Components connecteed to SDA/SCL on G
 1. 3x PCF8574 I2C Muxer In/Out , PCF1&2 drive the LEDs and Step-Buttons, third PCF drives Control-Buttons and Rotary-Encoder
 2. 1x ADS1115 Quad ADC
 3. 1x SD1306 OLED
-Die Kommunikation mit I2C erfolgt komplett über Core 0
+MIDI-Out/in, connected to GPIO 16/17
+One LED on Pin 2
+
+
+The Communication to I2C-devives is managed by Core 0 !!
 
 2021-07-26 E.Heinemann - Midi Sync, ESP32 ist slave
 2021-08-03 E.Heinemann - changed menu and removed some bugs
+2021-08-04 E.Heinemann - Change of Soundsets and Delay with fixed values implemented
+2021-08-14 E.Heinemann - Added Defines for SH1106 Display, - My SSD1306 was 0.96" and the SH1106 is 1.2"
+2021-08-15 E.Heinemann - added Reverb Effect
 
-Buttons:
-
-Encoder - Yes - Reeturn
-Menü - Page Start Stop
-
-
-1x PCM5102 Hifi DAC
-
-MIDI-Out/in, connected to GPIO 16/17
-
-One LED on Pin 2
 
 **************************************************************************/
 
@@ -33,7 +29,19 @@ One LED on Pin 2
 #include <SPI.h>
 #include <Wire.h>
 #include <Adafruit_GFX.h>
+
+//#define USE_SSD1306
+#define USE_SH1106
+
+#ifdef USE_SSD1306
 #include <Adafruit_SSD1306.h>
+#endif
+
+#ifdef USE_SH1106
+#include <Adafruit_SH110X.h>
+#endif
+
+
 
 // MIDI-Library FoutysevenEffects
 #include <MIDI.h>
@@ -74,8 +82,17 @@ TwoWire I2Ctwo = TwoWire(0);
 #define SCREEN_HEIGHT 64 // OLED display height, in pixels
 
 #define OLED_RESET    -1 // Reset pin # (or -1 if sharing Arduino reset pin)
+
+#ifdef USE_SSD1306
 #define SCREEN_ADDRESS 0x3C // The Address was discovered using the I2C Scanner
 Adafruit_SSD1306 display( SCREEN_WIDTH, SCREEN_HEIGHT, &I2Ctwo, OLED_RESET );
+#endif
+
+#ifdef USE_SH1106
+#define SCREEN_ADDRESS 0x3C // The Address was discovered using the I2C Scanner
+Adafruit_SH1106G display=  Adafruit_SH1106G( SCREEN_WIDTH, SCREEN_HEIGHT, &I2Ctwo );
+#endif
+
 
 #define ADC_ADDRESS 0x48
 
@@ -114,15 +131,27 @@ uint8_t  bpm_pot_fine_old_midi = bpm_pot_fine_midi;
 
 uint8_t  swing_midi = 0; // ToDo for later time-swing or accent-pattern
 
+// Soundset/Program-Settings
 uint8_t  program_midi =0; // 5 Programs
 uint8_t  program_tmp = 0; 
 uint8_t  progNumber = 0; // first subdirectory in /data 
 uint8_t  countPrograms = 5;
 
-uint8_t  delayToMix_midi = 0.5f;
-uint8_t  delayFeedback_midi = 0.5f;
-uint8_t  delayLen_midi = 11098;
 
+// Delay-Settings
+uint8_t  delayToMix_midi = 65;
+uint8_t  delayFeedback_midi = 10;
+uint8_t  delayLen_midi = 127;
+uint8_t  delayToMix_old = 65;
+uint8_t  delayFeedback_old = 10;
+uint8_t  delayLen_old = 127;
+
+// Reverb-Settings
+uint8_t rev_level_midi = 10;
+uint8_t rev_level_old = 10;
+
+
+// Accent/Velocity Settings
 uint16_t count_ppqn = 0;
 uint8_t  veloAccent = 120;
 uint8_t  veloAccent_midi = 120;
@@ -172,27 +201,13 @@ uint8_t act_page = 0;
 uint8_t act_instr = 1; // Pad1 Changed by Rotary Encodere
 
 // Menu
-String   menus[] = { "Sound 1", "Sound 2", "Effects", "Soundset", "Tempo", "Load", "Save", "Sync", "Delay" };
-uint8_t  menuNum[] = { 0,          1,         2,         3 ,         4,      5,       6 ,    7,       8 };
+String   menus[] = { "Sound 1", "Sound 2", "Filter",  "Delay", "Soundset", "Tempo", "Load", "Save", "Sync"};
+uint8_t  menuNum[] = { 0,          1,         2,          3 ,      4,          5,       6 ,    7,       8 };
  
 String  act_menu = menus[ act_menuNum ];
 
 uint8_t act_menuNum_max = 8;
 
-// Structure of "Instrument" must cover all these values
-
-/*
-// Instr
-String pages[] = { "Volume", "Decay", "Pitch","Pan"
-  , "NoteNum", "Channel", "Attack","EG"
-  , "Filter", "Reso", "BitCru","PCMSpeed"
-  , "Set", "", "-","-"
-  , "Main", "Fine", "Step","Sca"
-  , "-", "-", "-","-"
-  , "-", "-", "-","-"
-  , "-", "-", "-","-"
-  , "SyncIn", "SyncOut", "-", "-"};
-*/
 // Instrument 0 is Accent and has a differenz Menu!
 String pages_accent_short[]={"Acc","Ins","Vac","-"}; // Vac = Vactrol Audio Control via LDR   
 
@@ -200,12 +215,13 @@ String pages_accent_short[]={"Acc","Ins","Vac","-"}; // Vac = Vactrol Audio Cont
 String pages_short[] = { "Vol", "Dec", "Pit","Pan"
   , "Not", "Cha", "Att","EG"
   , "Frq", "Res", "Bit","PCM"
+  , "Mix", "Fbk", "Len", "Rvb"  
   , "Set", "-", "-", "-"
   , "Tmp", "Fin", "Steps", "Swi"
   , "Load", "-", "-", "-"
   , "Save", "-", "-", "-"
   , "SyncIn", "SyncOut", "-", "-"
-  , "Dly", "Fbk", "FBK", "-" };
+   };
 
 String no_display = "-";  
 
@@ -214,7 +230,7 @@ boolean  playBeats = false;
 
 // Instruments, Accent is not an Instrument but internally handled as an instrument .. therefore 17 Instruments from 0 to 16
 // const 
-String shortInstr[] ={ "ACC"   , "LCO", "SN" , "HHcl" , "HHop", "Cr", "Cl", "LT", "HT", "S1", "S2", "S3", "S4"
+String shortInstr[] ={ "ACC"   , "111", "222" , "333" , "HHop", "Cr", "Cl", "LT", "HT", "S1", "S2", "S3", "S4"
                        ,"T1","T2","T3","T4" };
 const String instrument[]      ={ "Accent", "S1", "S2" , "S3" , "S4", "S5", "S6", "S7", "S8", "S9", "S10", "S11", "S12","S13","S14","S15","S16" };
 int8_t  midinote_in_out[] ={ -1,  36, 37, 38, 39, 40, 41, 42, 43,  44, 45, 46, 47, 48, 49, 50, 51 }; // MIDI-Sound, edited via Menu 50=TOM, 44=closed HH, 
@@ -255,10 +271,10 @@ uint16_t patch_val2 = pitch_midi[ act_instr ];
 uint16_t patch_val3 = pan_midi[ act_instr ];
 
 // Some Names for the values - only for testing
-String param_name0= pages_short[0];//  "Vol"; 
-String param_name1= pages_short[1]; 
-String param_name2= pages_short[2]; 
-String param_name3= pages_short[3]; 
+String param_name0 = pages_short[0];//  "Vol"; 
+String param_name1 = pages_short[1]; 
+String param_name2 = pages_short[2]; 
+String param_name3 = pages_short[3]; 
 
 int16_t adc0, adc1, adc2, adc3;
 int16_t adc0_1, adc1_1, adc2_1, adc3_1;
@@ -272,8 +288,8 @@ float volts0, volts1, volts2, volts3;
 
 uint16_t display_prescaler = 0;
 uint16_t display_prescaler_fast = 0;
-uint16_t midi_prescaler = 0; 
-uint16_t ads_prescaler = 0; 
+uint16_t midi_prescaler   = 0; 
+uint16_t ads_prescaler    = 0; 
 uint16_t patch_edit_prescaler = 0; // Wait seconds after loading to sync the values
 
 uint8_t val0_synced = 0; // 0 adc-value is lower, 2 adc-value is higher, 1 = values are synced
@@ -282,9 +298,6 @@ uint8_t val2_synced = 0; // 0 adc-value is lower, 2 adc-value is higher, 1 = val
 uint8_t val3_synced = 0; // 0 adc-value is lower, 2 adc-value is higher, 1 = values are synced
 
 int16_t val_dev_null = 0;
-
-
-// static uint32_t loop_cnt;
 
 uint8_t compare2values( uint16_t val1, uint16_t val2 ){
   if( val1 < val2 ) return 0;
@@ -305,27 +318,24 @@ void setup(){
 
   // MIDI on Core 1 - the default-Core for Arduino
   pinMode( MIDIRX_PIN , INPUT_PULLUP);  // 22: GPIO 22, u2_RXD 
-  //Serial2.begin(31250, SERIAL_8N1, 22, 19);
-  // midiA.begin( MIDI_CHANNEL_OMNI );
   MIDISerial.begin( 31250, SERIAL_8N1, MIDIRX_PIN, MIDITX_PIN ); // midi port
   MIDI_setup();
   setup_i2s();
 
 #if 0
-    setup_wifi();
+  setup_wifi();
 #else
-    WiFi.mode(WIFI_OFF);
+  WiFi.mode(WIFI_OFF);
 #endif
+
   btStop();
   Sampler_Init();
   Effect_Init();
   Effect_SetBitCrusher( 0.0f );
-
+  Reverb_Setup();  
   //Delay
   Delay_Init();  
 
-
-  
   xTaskCreatePinnedToCore( Core0Task, "Core0Task", 8000, NULL, 5, &Core0TaskHnd, 0);
 
   step_pattern_1 =inotes1[ act_instr ];
@@ -340,7 +350,6 @@ void setup(){
 #endif
   
 }
-
 
 long myTimer = millis();
 long myTimer_bar = millis();
@@ -361,6 +370,7 @@ inline void audio_task(){
     Sampler_Process( &fl_sample, &fr_sample );
     Effect_Process( &fl_sample, &fr_sample );
     Delay_Process(&fl_sample, &fr_sample);
+    Reverb_Process(&fl_sample, &fr_sample );
 
     //Don’t block the ISR if the buffer is full
     if( !i2s_write_samples(fl_sample, fr_sample )){
@@ -380,88 +390,84 @@ void sync_compared_values(){
 // ###
 int16_t act_instr_tmp =  act_instr;
 uint16_t tmp_x = 0;
+uint16_t tmp_bpm = 130;
 
 void Core0TaskLoop(){
   // put your loop stuff for core0 here
 
-
   // Check Rotary-Encoder-Movements
   switch( act_menuNum ){
-       case 0:
-        act_instr_tmp =  readPCF_rotary_fast( act_instr );
-        if( act_instr_tmp != act_instr ){
-          if( act_instr_tmp<0 ){
-            act_instr_tmp = 16; 
-          }
-          if( act_instr_tmp>16 ){
-            act_instr_tmp = 0; // ACC
-          }
-          // store old Instrument-Beats
-          // TODO
-          sequencer_new_instr( act_instr_tmp );
+     case 0:
+      act_instr_tmp =  readPCF_rotary_fast( act_instr );
+      if( act_instr_tmp != act_instr ){
+        if( act_instr_tmp<0 ){
+          act_instr_tmp = 16; 
         }
-        break;
-     
-      case 1:
-        // Select new Instrument
-        act_instr_tmp =  readPCF_rotary_fast( act_instr );
-        if( act_instr_tmp != act_instr ){
-          if( act_instr_tmp<0 ){
-            act_instr_tmp = 16; 
-          }
-          if( act_instr_tmp>16 ){
-            act_instr_tmp = 0; // ACC
-          }
-          // store old Instrument-Beats
-          // TODO
-          sequencer_new_instr( act_instr_tmp );
+        if( act_instr_tmp>16 ){
+          act_instr_tmp = 0; // ACC
         }
+        // store old Instrument-Beats
+        // TODO
+        sequencer_new_instr( act_instr_tmp );
+      }
+      break;
+   
+    case 1:
+      // Select new Instrument
+      act_instr_tmp =  readPCF_rotary_fast( act_instr );
+      if( act_instr_tmp != act_instr ){
+        if( act_instr_tmp<0 ){
+          act_instr_tmp = 16; 
+        }
+        if( act_instr_tmp>16 ){
+          act_instr_tmp = 0; // ACC
+        }
+        // store old Instrument-Beats
+        // TODO
+        sequencer_new_instr( act_instr_tmp );
+      }
 
-        break;
-        
-      case 2: // Global   
-        // Filterfrequency
-        tmp_x =  readPCF_rotary_fast( 1 *2 );
-        break;
-          
-      case 3:  
-        // Soundset
-         program_tmp =  readPCF_rotary_fast( program_tmp );
-         if( program_tmp >= countPrograms ){
-           program_tmp = 0;
-         }
-         // program_tmp = map( program_midi,0,127,0,countPrograms-1 ); // 5 Sets );        
-        break;
-  
-      case 4: // Tempo BPM
-        // Change Speed by Buttons or Rotary
-        old_bpm = bpm;
-        uint16_t tmp_bpm =  readPCF_rotary_fast( bpm *2 );
-        bpm = 0.5f * tmp_bpm;
-        if( bpm != old_bpm ){
-          if( bpm < 30.0f ){
-            bpm = 30.0f;
-          }
-          if( bpm > 285.0f ){
-            bpm = 285.0f;
-          }
-          myTimer_Delta = sequencer_calc_delay( bpm );
+      break;
+      
+    case 2: // Global Filter Effects and Pitch  
+      tmp_x =  readPCF_rotary_fast( 1 *2 );
+      break;
+      
+    case 3: // Delay-Effect (Effects 2)  
+      tmp_x =  readPCF_rotary_fast( 1 *2 );
+      break;
+
+    case 4: // Soundset
+       program_tmp =  readPCF_rotary_fast( program_tmp );
+       if( program_tmp >= countPrograms ){
+         program_tmp = 0;
+       }
+       // program_tmp = map( program_midi,0,127,0,countPrograms-1 ); // 5 Sets );        
+      break;
+
+    case 5: // Tempo BPM
+      // Change Speed by Buttons or Rotary
+      old_bpm = bpm;
+      tmp_bpm =  readPCF_rotary_fast( bpm *2 );
+      bpm = 0.5f * tmp_bpm;
+      if( bpm != old_bpm ){
+        if( bpm < 30.0f ){
+          bpm = 30.0f;
         }
-        break;
-/*      case 5: // Bars
-        tmp_x =  readPCF_rotary_fast( 1 *2 );    
-        break;
-      case 8: // Sync  
-        // 8 Sync
-        tmp_x =  readPCF_rotary_fast( 1 *2 );
-        break;
+        if( bpm > 285.0f ){
+          bpm = 285.0f;
+        }
+        myTimer_Delta = sequencer_calc_delay( bpm );
+      }
+      break;
+      
      default:
-        tmp_x = 0;
-        break;
-   */     
-   }  
+      tmp_x =  readPCF_rotary_fast( 1 *2 );
+      break;
+  }  
  
   ads_prescaler +=1;
+  
   if( ads_prescaler > 70 ){
     readPCF();  // for the 16 Steps
     readPCF3(); // for the Control-Buttons
@@ -478,8 +484,6 @@ void Core0TaskLoop(){
   }
 
   if( playBeats==true ){
-    //display_prescaler_fast +=1;
-    //if( display_prescaler_fast> 6 && do_display_update_fast== true ){
     pcf_update_leds();
     // do_display_update_fast = false;
     
@@ -489,12 +493,7 @@ void Core0TaskLoop(){
 
   // How is the status after loading a new patch, this should be done only once!!
   if( patch_edit_prescaler == 25 ){
-    sync_compared_values();
-/*    val0_synced = compare2values( param_val0, patch_val0 );    
-    val1_synced = compare2values( param_val1, patch_val1 );    
-    val2_synced = compare2values( param_val2, patch_val2 );    
-    val3_synced = compare2values( param_val3, patch_val3 );  
- */     
+    sync_compared_values();   
   }
 
   // How is the status after a while, after the value crossed its old value, the value should be in sync!
@@ -506,8 +505,7 @@ void Core0TaskLoop(){
   }else{
     patch_edit_prescaler +=1;  
   }
-  
-  
+
 }
 
 // ###
@@ -520,12 +518,23 @@ void Core0TaskSetup(){
   pinMode( SCL2, INPUT_PULLUP); 
   I2Ctwo.begin( SDA2,SCL2, 200000 ); // SDA2 pin 0, SCL2 pin 5, works with 50.000 Hz if pinned to other Core0
 
+
   // SSD1306 OLED - Display first to be able to show Errors on the Display
   // SSD1306_SWITCHCAPVCC = generate display voltage from 3.3V internally
+#ifdef USE_SSD1306
   if( !display.begin( SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS) ){
     Serial.println(F("SSD1306 allocation failed"));
     for(;;); // Don't proceed, loop forever
   }
+#endif
+
+#ifdef USE_SH1106
+ // 0x3c
+  if( !display.begin( SCREEN_ADDRESS, true) ){
+    Serial.println(F("SH1106 allocation failed"));
+    for(;;); // Don't proceed, loop forever
+  }
+#endif
 
   // PCF8574
   PCF_setup();
@@ -539,14 +548,14 @@ void Core0TaskSetup(){
   sync_compared_values();  // First compare to get valid values
 }
 
-void Core0Task(void *parameter){
-    Core0TaskSetup();
-    while( true ){
-        Core0TaskLoop();
-        // this seems necessary to trigger the watchdog
-        delay(1);
-        yield();
-    }
+void Core0Task( void *parameter ){
+  Core0TaskSetup();
+  while( true ){
+    Core0TaskLoop();
+    // this seems necessary to trigger the watchdog
+    delay(1);
+    yield();
+  }
 }
 
 
@@ -557,17 +566,10 @@ void Core0Task(void *parameter){
 // ###
 void loop(){
   audio_task();
-  // loop_cnt ++;
-  // if( loop_cnt >= SAMPLE_RATE ){
-      // loop_cnt = 0;
-      // loop_1Hz();
-      // Was soll man in diesem Loop noch machen?
-  //}
 
   // Stepsequencer
   cur_time =  millis();
   if( external_clock_in == false ){
-
     if( playBeats && myTimer_Delta + myTimer < cur_time ){  
       myTimer_bar = myTimer_Delta + myTimer;
       sequencer_callback();
@@ -575,9 +577,20 @@ void loop(){
       Serial.print("Time-Difference Clock:");
       Serial.println( cur_time - ( myTimer_Delta + myTimer ) ); 
 #endif       
+      Delay_Sync_Values();
+      Effect_Sync_Values();
+      Reverb_Sync_Values();
       myTimer = myTimer + myTimer_Delta;
     }
+  }else{
 
+    if( myTimer_Delta + myTimer < cur_time ){  
+       Delay_Sync_Values();
+       Effect_Sync_Values();
+       Reverb_Sync_Values();
+       myTimer = myTimer + myTimer_Delta;   
+    }
+  }
     
 /*
     
@@ -606,7 +619,7 @@ void loop(){
     }  
 */
     
-  }
+
 
   
   // MIDI  
