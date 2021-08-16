@@ -1,6 +1,7 @@
 // History:
 // 2021-07-05 E.Heinemann less access to I2C, third PCF8574 with Rotary-Encoder is checked in a high frequency - Rotary Encoder provides results via Serial Monitor for now
 // 2021-08-03 E.Heinemann, added new functions for a better initialization
+// 2021-08-16 E.Heinemann, Changeed Menu-Structure
 // #define DEBUG_PCF
 
 // 3 PCF8574-ICs are used
