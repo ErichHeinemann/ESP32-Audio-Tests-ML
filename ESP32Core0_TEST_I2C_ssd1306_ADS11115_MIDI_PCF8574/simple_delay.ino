@@ -8,18 +8,19 @@
  */
 
 
-/* max delay can be changed but changes also the memory consumption */
-#define MAX_DELAY  11100
-
-/*
- * module variables
- */
+// max delay can be changed but changes also the memory consumption
+// #define MAX_DELAY  11100
+#define MAX_DELAY  5102
+#define NORM127MUL  0.007874f
+//  module variables
 float *delayLine_l;
 float *delayLine_r;
 float delayToMix = 0.2f;
 float delayFeedback = 0.1f;
-uint32_t delayLen = 11098;
-uint32_t delayIn = 0;
+
+// uint32_t delayLen = 11098;
+uint32_t delayLen = 5100;
+uint32_t delayIn  = 0;
 uint32_t delayOut = 0;
 
 void Delay_Init( void ){
@@ -41,27 +42,46 @@ void Delay_Reset( void ){
     }
 }
 
+void Delay_Sync_Values(){
+  if( delayToMix_old != delayToMix_midi ){
+    delayToMix_old = delayToMix_midi;
+    delayToMix     = delayToMix_midi * NORM127MUL;
+  }
+  if( delayFeedback_old != delayFeedback_midi ){
+    delayFeedback_old = delayFeedback_midi;
+    delayFeedback     = delayFeedback_midi * NORM127MUL / 2
+    
+    ;
+  }
+  if( delayLen_old != delayLen_midi ){
+    delayLen_old = delayLen_midi;
+    delayLen  = 16 + delayLen_midi *40; // 85; // DelayLen darf nicht 0 sein!
+  }  
+}
+
+
 void Delay_Process( float *signal_l, float *signal_r ){
-    delayLine_l[delayIn] = *signal_l;
-    delayLine_r[delayIn] = *signal_r;
 
-    delayOut = delayIn + (1 + MAX_DELAY - delayLen);
+  delayLine_l[delayIn] = *signal_l;
+  delayLine_r[delayIn] = *signal_r;
+  
+  delayOut = delayIn + (1 + MAX_DELAY - delayLen);
+  
+  if( delayOut >= MAX_DELAY ){
+      delayOut -= MAX_DELAY;
+  }
 
-    if( delayOut >= MAX_DELAY ){
-        delayOut -= MAX_DELAY;
-    }
-
-    *signal_l += delayLine_l[delayOut] * delayToMix;
-    *signal_r += delayLine_r[delayOut] * delayToMix;
-
-    delayLine_l[delayIn] += delayLine_l[delayOut] * delayFeedback;
-    delayLine_r[delayIn] += delayLine_r[delayOut] * delayFeedback;
-
-    delayIn ++;
-
-    if( delayIn >= MAX_DELAY ){
-        delayIn = 0;
-    }
+  *signal_l += delayLine_l[delayOut] * delayToMix;
+  *signal_r += delayLine_r[delayOut] * delayToMix;
+  
+  delayLine_l[delayIn] += delayLine_l[delayOut] * delayFeedback;
+  delayLine_r[delayIn] += delayLine_r[delayOut] * delayFeedback;
+  
+  delayIn ++;
+  
+  if( delayIn >= MAX_DELAY ){
+      delayIn = 0;
+  }
 }
 
 void Delay_SetFeedback(uint8_t unused, float value){
