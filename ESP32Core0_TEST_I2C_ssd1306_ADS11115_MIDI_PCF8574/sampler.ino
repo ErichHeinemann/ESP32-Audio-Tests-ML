@@ -22,7 +22,7 @@
 // #define DEBUG_SAMPLER
 
 // If Blocksize us set to 2048, the limit of SAMPLECNT is 12
-#define BLOCKSIZE  (2048*1) /* only multiples of 2, otherwise the rest will not work */
+#define BLOCKSIZE  (1024*1) /* only multiples of 2, otherwise the rest will not work */
 #define SAMPLECNT 12
 
 #define ARRAY_SIZE(a) (sizeof(a)/sizeof(a[0]))
