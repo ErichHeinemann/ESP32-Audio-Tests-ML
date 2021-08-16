@@ -11,11 +11,22 @@
 // 2021-07-05 E.Heinemann replaced somee static test-Strings with real content
 
 
+#ifdef USE_SSD1306
+#define DISPLAY_WHITE SSD1306_WHITE
+#define DISPLAY_INVERSE SSD1306_INVERSE
+#endif
+
+#ifdef USE_SH1106
+#define DISPLAY_WHITE SH110X_WHITE
+#define DISPLAY_INVERSE SH110X_INVERSE 
+#endif
+
+
 void update_display_bars(  ){
   
   display.clearDisplay();
   display.setTextSize(1);             // Normal 1:1 pixel scale
-  display.setTextColor(SSD1306_WHITE);
+  display.setTextColor( DISPLAY_WHITE );
 
   // display.setTextSize(2);             // Normal 1:1 pixel scale
   // If the values are not synced, then show both
@@ -26,8 +37,8 @@ void update_display_bars(  ){
     // display.println( patch_val0 );   
     display.setCursor( 0, 0 );
     display.print(( param_name0 ));    
-    display.drawRect(20, 1, (int) param_val0/3, 3, SSD1306_INVERSE);
-    display.drawRect(20, 4, (int) patch_val0/3, 3, SSD1306_INVERSE);
+    display.drawRect(20, 1, (int) param_val0/3, 3, DISPLAY_INVERSE );
+    display.drawRect(20, 4, (int) patch_val0/3, 3, DISPLAY_INVERSE );
   }else{
     switch( act_menuNum ){
       case 1:
@@ -36,7 +47,7 @@ void update_display_bars(  ){
         display.setCursor( 22, 0 ); // Midi-Notenumber
         display.print( param_val0 );
         break;
-      case 3: // Soundset
+      case 4: // Soundset
         display.setTextSize(2); 
         display.setCursor( 0, 0 );
         display.print( "Soundset " );
@@ -46,7 +57,7 @@ void update_display_bars(  ){
       default:
         display.setCursor( 0, 0 );
         display.print(( param_name0 ));      
-        display.fillRect(20, 1, (int) param_val0/3, 6, SSD1306_INVERSE);
+        display.fillRect(20, 1, (int) param_val0/3, 6, DISPLAY_INVERSE );
         break;
     }
   }
@@ -60,8 +71,8 @@ void update_display_bars(  ){
 
     if( val1_synced != 1 ){
       //  display.println( patch_val1 );   
-      display.drawRect(84, 1, (int) param_val1/3, 3, SSD1306_INVERSE);
-      display.drawRect(84, 4, (int) patch_val1/3, 3, SSD1306_INVERSE);
+      display.drawRect(84, 1, (int) param_val1/3, 3, DISPLAY_INVERSE);
+      display.drawRect(84, 4, (int) patch_val1/3, 3, DISPLAY_INVERSE);
     }else{
        // display.println( param_val1 );
       switch( act_menuNum ){
@@ -71,7 +82,7 @@ void update_display_bars(  ){
           display.print( param_val1 );
           break;
         default:
-          display.fillRect( 84, 1, (int) param_val1/3, 6, SSD1306_INVERSE);
+          display.fillRect( 84, 1, (int) param_val1/3, 6, DISPLAY_INVERSE);
         break;
       }
     }
@@ -85,17 +96,17 @@ void update_display_bars(  ){
     // display.print(" ");
     // display.println( patch_val2 );       
     if( val2_synced != 1 ){
-      display.drawRect(20, start_row2+1, (int) param_val2/3, 3, SSD1306_INVERSE);
-      display.drawRect(20, start_row2+4, (int) patch_val2/3, 3, SSD1306_INVERSE);
+      display.drawRect(20, start_row2+1, (int) param_val2/3, 3, DISPLAY_INVERSE);
+      display.drawRect(20, start_row2+4, (int) patch_val2/3, 3, DISPLAY_INVERSE);
     }else{
       switch( act_menuNum ){
-        case 4:  
-        // Count Steps - normally 16 Steps
+        case 5:  
+          // Tempo
           display.setCursor( 26, start_row2 ); // Count Bars
           display.print( count_bars ); 
           break;         
         default:
-          display.fillRect(20, start_row2+1, (int) param_val2/3, 6, SSD1306_INVERSE);
+          display.fillRect(20, start_row2+1, (int) param_val2/3, 6, DISPLAY_INVERSE);
           break; // Wird nicht benötigt, wenn Statement(s) vorhanden sind
       }
     }
@@ -107,10 +118,10 @@ void update_display_bars(  ){
     // display.print(" ");
     // display.println( patch_val3 );   
     if( val3_synced != 1 ){
-      display.drawRect( 84, start_row2+1, (int) param_val3/3, 3, SSD1306_INVERSE);
-      display.drawRect( 84, start_row2+4, (int) patch_val3/3, 3, SSD1306_INVERSE);
+      display.drawRect( 84, start_row2+1, (int) param_val3/3, 3, DISPLAY_INVERSE);
+      display.drawRect( 84, start_row2+4, (int) patch_val3/3, 3, DISPLAY_INVERSE);
     }else{ 
-      display.fillRect( 84, start_row2+1, (int) param_val3/2, 6, SSD1306_INVERSE);
+      display.fillRect( 84, start_row2+1, (int) param_val3/2, 6, DISPLAY_INVERSE);
     }
   }
 
@@ -132,18 +143,18 @@ void update_display_bars(  ){
       // is this bit set?
       if( step_pattern_1 & (1 << i) ){
         // draw unset step
-        display.drawRect( i *step_width +j , offset, step_width-2, step_height, SSD1306_INVERSE);
+        display.drawRect( i *step_width +j , offset, step_width-2, step_height, DISPLAY_INVERSE);
       }else{
         // draw set step
-        display.fillRect( i *step_width +j , offset, step_width-2, step_height, SSD1306_INVERSE);
+        display.fillRect( i *step_width +j , offset, step_width-2, step_height, DISPLAY_INVERSE);
       }
       
       if( step_pattern_2 & (1 << i) ){
         // draw unset step
-        display.drawRect( i *step_width +j , offset+1+step_height, step_width-2, step_height, SSD1306_INVERSE);
+        display.drawRect( i *step_width +j , offset+1+step_height, step_width-2, step_height, DISPLAY_INVERSE);
       }else{
         // draw set step
-        display.fillRect( i *step_width +j , offset+1+step_height, step_width-2, step_height, SSD1306_INVERSE);
+        display.fillRect( i *step_width +j , offset+1+step_height, step_width-2, step_height, DISPLAY_INVERSE);
       }
   
     }
@@ -165,7 +176,7 @@ void update_display_bars(  ){
   // Status 
 
     // and Tempo Menu
-  if( act_menuNum == 4 ){
+  if( act_menuNum == 5 ){ // Tempo-Menu
     display.setTextSize(1); 
     display.setCursor( 20, 40 ); 
     if( playBeats == true ){
@@ -233,12 +244,15 @@ void update_display_bars(  ){
 // OLD Version used in the Videos 1-3
 // ##############################################
 
-
+/*
 void update_display_bars_alt(  ){
   
   display.clearDisplay();
   display.setTextSize(1);             // Normal 1:1 pixel scale
-  display.setTextColor(SSD1306_WHITE);
+//  display.setTextColor( SSD1306_WHITE );
+  display.setTextColor( DISPLAY_WHITE );
+
+
 
   // display.setTextSize(2);             // Normal 1:1 pixel scale
   // If the values are not synced, then show both
@@ -247,12 +261,13 @@ void update_display_bars_alt(  ){
   if( val0_synced != 1 ){
     display.print(" ");
     display.println( patch_val0 );   
-    display.drawRect(0, 9, (int) param_val0/2, 3, SSD1306_INVERSE);
-    display.drawRect(0, 12, (int) patch_val0/2, 3, SSD1306_INVERSE);
+    display.drawRect(0, 9, (int) param_val0/2, 3, DISPLAY_INVERSE);
+    // display.drawRect(0, 9, (int) param_val0/2, 3, DISPLAY_INVERSE);
+    display.drawRect(0, 12, (int) patch_val0/2, 3, DISPLAY_INVERSE);
   }else{
     display.print(" ");
     display.println( param_val0 );   
-    display.fillRect(0, 9, (int) param_val0/2, 6, SSD1306_INVERSE);
+    display.fillRect(0, 9, (int) param_val0/2, 6, DISPLAY_INVERSE );
   }
 
   
@@ -265,22 +280,22 @@ void update_display_bars_alt(  ){
     if( act_menuNum != 1 ){ 
       if( val1_synced != 1 ){
         display.println( patch_val1 );   
-        display.drawRect(64, 9, (int) param_val1/2, 3, SSD1306_INVERSE);
-        display.drawRect(64, 12, (int) patch_val1/2, 3, SSD1306_INVERSE);
+        display.drawRect(64, 9, (int) param_val1/2, 3, DISPLAY_INVERSE);
+        display.drawRect(64, 12, (int) patch_val1/2, 3, DISPLAY_INVERSE);
       }else{
         display.println( param_val1 );   
-        display.fillRect(64, 9, (int) param_val1/2, 6, SSD1306_INVERSE);
+        display.fillRect(64, 9, (int) param_val1/2, 6, DISPLAY_INVERSE);
       }
     }else{
       // In Menu 1 this is used to display the MIDI-Channel
       // MIDI-Channel has Values from 1 to 16
       if( val1_synced != 1 ){
         display.println( patch_val1 );   
-        display.drawRect(64, 9, (int) (param_val1-1)/2, 3, SSD1306_INVERSE);
-        display.drawRect(64, 12, (int) (patch_val1-1)/2, 3, SSD1306_INVERSE);
+        display.drawRect(64, 9, (int) (param_val1-1)/2, 3, DISPLAY_INVERSE);
+        display.drawRect(64, 12, (int) (patch_val1-1)/2, 3, DISPLAY_INVERSE);
       }else{
         display.println( param_val1 );   
-        display.fillRect(64, 9, (int) (patch_val1-1)/2, 6, SSD1306_INVERSE);
+        display.fillRect(64, 9, (int) (patch_val1-1)/2, 6, DISPLAY_INVERSE);
       }
     }
   }
@@ -293,11 +308,11 @@ void update_display_bars_alt(  ){
     display.print(" ");
     if( val2_synced != 1 ){
       display.println( patch_val2 );   
-      display.drawRect(0, 26, (int) param_val2/2, 3, SSD1306_INVERSE);
-      display.drawRect(0, 29, (int) patch_val2/2, 3, SSD1306_INVERSE);
+      display.drawRect(0, 26, (int) param_val2/2, 3, DISPLAY_INVERSE);
+      display.drawRect(0, 29, (int) patch_val2/2, 3, DISPLAY_INVERSE);
     }else{
       display.println( param_val2 );   
-      display.fillRect(0, 26, (int) param_val2/2, 6, SSD1306_INVERSE);
+      display.fillRect(0, 26, (int) param_val2/2, 6, DISPLAY_INVERSE);
     }
   }
   
@@ -307,11 +322,11 @@ void update_display_bars_alt(  ){
     display.print(" ");
     if( val3_synced != 1 ){
       display.println( patch_val3 );   
-      display.drawRect(64, 26, (int) param_val3/2, 3, SSD1306_INVERSE);
-      display.drawRect(64, 29, (int) patch_val3/2, 3, SSD1306_INVERSE);
+      display.drawRect(64, 26, (int) param_val3/2, 3, DISPLAY_INVERSE);
+      display.drawRect(64, 29, (int) patch_val3/2, 3, DISPLAY_INVERSE);
     }else{
       display.println( param_val3 );   
-      display.fillRect(64, 26, (int) param_val3/2, 6, SSD1306_INVERSE);
+      display.fillRect(64, 26, (int) param_val3/2, 6, DISPLAY_INVERSE);
     }
   }
 
@@ -333,30 +348,19 @@ void update_display_bars_alt(  ){
       // is this bit set?
       if( step_pattern_1 & (1 << i) ){
         // draw unset step
-        display.drawRect( i *step_width +j , offset, step_width-2, step_height, SSD1306_INVERSE);
+        display.drawRect( i *step_width +j , offset, step_width-2, step_height, DISPLAY_INVERSE);
       }else{
         // draw set step
-        display.fillRect( i *step_width +j , offset, step_width-2, step_height, SSD1306_INVERSE);
+        display.fillRect( i *step_width +j , offset, step_width-2, step_height, DISPLAY_INVERSE);
       }
       
       if( step_pattern_2 & (1 << i) ){
         // draw unset step
-        display.drawRect( i *step_width +j , offset+1+step_height, step_width-2, step_height, SSD1306_INVERSE);
+        display.drawRect( i *step_width +j , offset+1+step_height, step_width-2, step_height, DISPLAY_INVERSE);
       }else{
         // draw set step
-        display.fillRect( i *step_width +j , offset+1+step_height, step_width-2, step_height, SSD1306_INVERSE);
+        display.fillRect( i *step_width +j , offset+1+step_height, step_width-2, step_height, DISPLAY_INVERSE);
       }
-  
-      /*
-      // highlight the active step
-      if( active_step < 8 && active_step == i ){
-        display.drawLine( i *step_width +j +2, offset+2, i *step_width -5 +j +step_width, offset+2, SSD1306_INVERSE );   
-      }
-      if( active_step >= 8 && active_step-8 == i ){
-        display.drawLine( i *step_width +j +2, offset+3+step_height, i *step_width -5 +j +step_width, offset+3+step_height, SSD1306_INVERSE );    
-      }
-      */
-
     }
   }else{
     display.setTextSize(2);
@@ -387,7 +391,7 @@ void update_display_bars_alt(  ){
       display.print( "||"); 
     }    
     // Recording?
-    // display.fillCircle( 69, 59, 4, SSD1306_INVERSE);
+    // display.fillCircle( 69, 59, 4, DISPLAY_INVERSE);
     display.setTextSize(2); 
     display.setCursor( 30, 50 ); 
     display.print( bpm );
@@ -402,7 +406,7 @@ void update_display_bars_alt(  ){
       display.print( "||");
     }
     // Recording?
-    // display.fillCircle( 69, 59, 4, SSD1306_INVERSE);
+    // display.fillCircle( 69, 59, 4, DISPLAY_INVERSE);
     display.setTextSize(1); 
     display.setCursor( 69, 57 ); 
     display.print( bpm );
@@ -431,6 +435,7 @@ void update_display_bars_alt(  ){
   digitalWrite( LED_PIN, HIGH ); // Low
 
 }
+*/
 
 /*
 void update_display_fast(  ){
