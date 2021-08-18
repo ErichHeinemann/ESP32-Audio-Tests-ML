@@ -10,7 +10,7 @@ I am still in the stage of developing it, but a lot works already and makes a lo
 https://github.com/ErichHeinemann/ESP32-Audio-Tests-ML/tree/main/ESP32Core0_TEST_I2C_ssd1306_ADS11115_MIDI_PCF8574
 
 
-<h2> Aptil 2021 - Tests and Volca Beats PCM MOD</h1>
+<h2> April 2021 - Tests and Volca Beats PCM MOD</h1>
 I did some testing with his code and it is really fine and sounds much better than expected, but he used a MIDI-Controller-Keyboard with specific CCs - and I don´t have one of these.
 
 Today, April 2021, there are a lot of options to create a small Synthesizer or Drumcomputer based on Arduino / Teensy but the Projects from Marcel have the best Price/Sound - Ratio.
