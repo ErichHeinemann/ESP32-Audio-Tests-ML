@@ -1,10 +1,17 @@
 # ESP32-Audio-Tests-ML
-This Repository is a collection of modified Repositories originally created by Marcel Licence and modified by me
+This Repository is a collection of modified Repositories originally created by Marcel Licence and modified by me in 2021.
+Marcel Licence went forward and added a lot of features which my tests like the Volca beats Mod does not. The Volca is still at the version from early 2021!!
 
-The original Repositories are there:
+I had tested the Volca Beats MOD with several ESP32 Devekits and it works.
+
+Mid 2022, fabien reportet, that this code does not compile with the Arduino IDE 2.0 RC ... I used the 1.8.19 in 2021.
+It is up to You, Your risk, to use this code as an simplified version of marcels code.
+
+The original Repositories are there, use these repos:
 https://github.com/marcel-licence
 
-<h2> July 2021 - DIY Volca Percussion <b> POlca </b></h2>
+
+<h2> July 2021 - DIY Volca Percussion <b> Polca </b></h2>
 This project, which is a new extended version of the PCM-Mod is a standalone Volca-Thing, in my case it has the same size as my Volca Beats.
 I am still in the stage of developing it, but a lot works already and makes a lot of fun.
 https://github.com/ErichHeinemann/ESP32-Audio-Tests-ML/tree/main/ESP32Core0_TEST_I2C_ssd1306_ADS11115_MIDI_PCF8574
